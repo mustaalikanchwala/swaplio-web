@@ -126,7 +126,7 @@ export default function EditListingPage() {
             {/* Existing images */}
             {keptImages.map((img) => (
               <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden bg-[var(--bg-secondary)]">
-                <Image src={img.url} alt="Existing" fill className="object-cover" />
+                <Image src={img.signedUrl} alt="Existing" fill className="object-cover" />
                 <button type="button" onClick={() => removeKeptImage(img.id)}
                   className="absolute top-1 right-1 p-0.5 rounded-full bg-black/70 text-white hover:bg-red-500/80 transition-colors">
                   <X size={12} />
