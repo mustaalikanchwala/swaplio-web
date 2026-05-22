@@ -36,3 +36,6 @@ Thumbs.db
 
 # Vite
 .vite/
+
+# next.js
+.next

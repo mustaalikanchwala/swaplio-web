@@ -1,15 +1,15 @@
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// All TypeScript types for the Swaplio application
+// ─────────────────────────────────────────────────────────────────────────────
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+// ── AUTH / USER ───────────────────────────────────────────────────────────────
 
-export interface RegisterRequest {
-  fullName: string;         // was: name
+export interface User {
+  id: string;
+  fullName: string;
   email: string;
-  password: string;
-  phoneNumber?: string;     // was: phone
+  phone?: string;
+  bio?: string;
 }
 
 export interface AuthResponse {
@@ -17,58 +17,40 @@ export interface AuthResponse {
   user: User;
 }
 
-// ─── User ────────────────────────────────────────────────────────────────────
-
-export interface User {
-  id: string | number;
-  fullName: string;         // was: name
+export interface RegisterRequest {
+  fullName: string;
   email: string;
-  phoneNumber?: string;     // was: phone
-  avatar?: string;
-  institution?: string;     // was: college
-  isVerified?: boolean;     // new
-  createdAt?: string;
+  password: string;
 }
 
-// ─── Category ────────────────────────────────────────────────────────────────
-
-export interface Category {
-  id: string | number;
-  name: string;
-  icon?: string;
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
-// ─── Listing ─────────────────────────────────────────────────────────────────
+// ── LISTINGS ─────────────────────────────────────────────────────────────────
 
-export type Condition = 'NEW' | 'LIKE_NEW' | 'GOOD' | 'FAIR' | 'POOR';
-export type ListingStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED';
+export type Condition = 'NEW' | 'LIKE_NEW' | 'GOOD' | 'FAIR';
+export type ListingStatus = 'ACTIVE' | 'SOLD';
 
 export interface ListingImage {
-  id: string | number;
+  id: string;
   signedUrl: string;
-  isPrimary?: boolean;
 }
 
 export interface Listing {
-  id: string | number;
+  id: string;
   title: string;
   description: string;
   price: number;
   condition: Condition;
   status: ListingStatus;
-  category: Category;
-  seller: User;
+  categoryId: string;
+  categoryName: string;
+  sellerName: string;
+  sellerId: string;
   images: ListingImage[];
   createdAt: string;
-  updatedAt?: string;
-}
-
-export interface ListingPage {
-  content: Listing[];
-  totalPages: number;
-  totalElements: number;
-  number: number;
-  last: boolean;
 }
 
 export interface CreateListingRequest {
@@ -76,51 +58,118 @@ export interface CreateListingRequest {
   description: string;
   price: number;
   condition: Condition;
-  categoryId: string | number;
+  categoryId: string;
 }
 
 export interface EditListingRequest extends CreateListingRequest {
-  keepImageIds?: (string | number)[];
+  keepImageIds?: string[];
 }
 
-export interface SearchListingsParams {
-  keyword?: string;
-  categoryId?: string | number;
-  minPrice?: number;
-  maxPrice?: number;
-  condition?: Condition;
-  page?: number;
-  size?: number;
+// ── CATEGORIES ───────────────────────────────────────────────────────────────
+
+export interface Category {
+  id: string;
+  name: string;
 }
 
-// ─── Meeting ─────────────────────────────────────────────────────────────────
+// ── MEETINGS ─────────────────────────────────────────────────────────────────
 
-export type MeetingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+export type MeetingStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'REJECTED'
+  | 'RESCHEDULED'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 export interface Meeting {
-  id: string | number;
-  listing: Listing;
-  buyer: User;
-  seller: User;
-  meetingDate: string;
-  meetingTime: string;
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  sellerName: string;
+  meetingDate: string;   // yyyy-MM-dd
+  meetingTime: string;   // HH:mm:ss
   location: string;
   notes?: string;
   status: MeetingStatus;
+  proposedDate?: string;
+  proposedTime?: string;
+  proposedLocation?: string;
+  proposedNotes?: string;
   createdAt: string;
 }
 
-export interface CreateMeetingRequest {
-  listingId: string | number;
-  meetingDate: string;
-  meetingTime: string;
+export interface RequestMeetingPayload {
+  listingId: string;
+  meetingDate: string;   // yyyy-MM-dd
+  meetingTime: string;   // HH:mm:ss
   location: string;
   notes?: string;
 }
 
-// ─── API Error ───────────────────────────────────────────────────────────────
+export interface SellerRespondPayload {
+  action: 'CONFIRM' | 'REJECT' | 'RESCHEDULE';
+  proposedDate?: string;
+  proposedTime?: string;
+  proposedLocation?: string;
+  proposedNotes?: string;
+}
 
-export interface ApiError {
-  status: number;
-  message: string;
+export interface BuyerRespondPayload {
+  action: 'ACCEPT' | 'DECLINE';
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────────────────
+
+export interface Conversation {
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  listingImageUrl?: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  sellerName: string;
+  lastMessage?: string;
+  lastMessageAt?: string;
+  unreadCount: number;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  sentAt: string;
+  isRead: boolean;
+}
+
+export interface ChatMessage {
+  conversationId?: string;
+  listingId?: string;
+  content: string;
+}
+
+// ── PAGINATION ───────────────────────────────────────────────────────────────
+
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;       // 0-indexed current page
+  last: boolean;
+}
+
+export interface ListingFilterParams {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  condition?: Condition;
 }
