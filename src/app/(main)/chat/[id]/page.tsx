@@ -2,10 +2,11 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, Tag } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { useMessages } from '@/hooks/useChat';
+import { useMessages, useConversations } from '@/hooks/useChat';
+import { useListing } from '@/hooks/useListings';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { sendMessage } from '@/lib/websocket';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +29,20 @@ export default function ChatRoomPage() {
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load conversation details and listing info
+  const { data: conversations = [] } = useConversations();
+  const currentConversation = conversations.find((c) => c.id === localConversationId);
+  const finalListingId = listingId || currentConversation?.listingId;
+  const { data: listing } = useListing(finalListingId ?? '');
+
+  const talkToName = currentConversation
+    ? currentUser?.id === currentConversation.buyerId
+      ? currentConversation.sellerName
+      : currentConversation.buyerName
+    : listing
+    ? listing.sellerName
+    : 'New Message';
 
   // Load message history (disabled for new conversations)
   const { data: messages = [], isLoading } = useMessages(localConversationId ?? '');
@@ -98,15 +113,54 @@ export default function ChatRoomPage() {
           </Link>
           <div>
             <p className="font-semibold text-sm text-[var(--text-primary)]">
-              {localConversationId ? `Conversation` : 'New Message'}
+              {talkToName}
             </p>
             {listingId && !localConversationId && (
-              <p className="text-xs text-[var(--text-muted)]">
+              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
                 Starting a new conversation
+              </p>
+            )}
+            {currentConversation && (
+              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                Discussing: {currentConversation.listingTitle}
               </p>
             )}
           </div>
         </div>
+
+        {/* Listing Mini-Card */}
+        {listing && (
+          <div className="bg-white/5 border-b border-[var(--border-subtle)] px-4 py-2 flex items-center justify-between gap-3 animate-fade-in shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              {listing.images?.[0] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={listing.images[0].signedUrl}
+                  alt={listing.title}
+                  className="w-9 h-9 object-cover rounded-lg border border-white/10 shrink-0"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-white/5 rounded-lg flex items-center justify-center border border-white/10 shrink-0">
+                  <Tag size={14} className="text-[var(--text-muted)] shrink-0" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-medium text-xs text-[var(--text-primary)] truncate">
+                  {listing.title}
+                </p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                  ₹{listing.price} • {listing.condition}
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/listings/${listing.id}`}
+              className="text-[10px] text-violet-400 hover:text-violet-300 font-semibold px-2 py-1 rounded bg-violet-500/10 border border-violet-500/20 hover:bg-violet-500/20 transition-all shrink-0"
+            >
+              View Info
+            </Link>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">

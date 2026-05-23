@@ -79,7 +79,7 @@ export default function ProfilePage() {
 
               <div>
                 <label className="label">Phone <span className="text-[var(--text-muted)] normal-case font-normal">(optional)</span></label>
-                <input type="tel" {...register('phoneNumber')} className="input" id="profile-phone" placeholder="+91 98765 43210" />
+                <input type="tel" {...register('phone')} className="input" id="profile-phone" placeholder="+91 98765 43210" />
               </div>
 
               <div>

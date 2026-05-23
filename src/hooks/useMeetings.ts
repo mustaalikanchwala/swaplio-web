@@ -30,7 +30,7 @@ export function useBuyerMeetings(filters?: {
     queryKey: ['meetings', 'buyer', filters],
     queryFn: () =>
       api
-        .get<Meeting[]>('/api/meetings/buyer', { params: filters })
+        .get<Meeting[]>('/api/meetings/my/buying', { params: filters })
         .then((r) => r.data),
     staleTime: 30 * 1000,
   });
@@ -46,7 +46,7 @@ export function useSellerMeetings(filters?: {
     queryKey: ['meetings', 'seller', filters],
     queryFn: () =>
       api
-        .get<Meeting[]>('/api/meetings/seller', { params: filters })
+        .get<Meeting[]>('/api/meetings/my/selling', { params: filters })
         .then((r) => r.data),
     staleTime: 30 * 1000,
   });

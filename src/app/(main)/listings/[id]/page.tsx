@@ -16,6 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useListing, useMarkSold, useDeleteListing } from '@/hooks/useListings';
+import { useConversations } from '@/hooks/useChat';
 import { ImageCarousel } from '@/components/listings/ImageCarousel';
 import { ConditionBadge } from '@/components/ui/ConditionBadge';
 import { RequestMeetingDialog } from '@/components/meetings/RequestMeetingDialog';
@@ -34,10 +35,24 @@ export default function ListingDetailPage() {
   const { data: listing, isLoading, isError } = useListing(id);
   const { mutateAsync: markSold, isPending: isMarkingSold } = useMarkSold(id);
   const { mutateAsync: deleteListing, isPending: isDeleting } = useDeleteListing();
+  const { data: conversations } = useConversations();
 
   const isSeller = !!currentUser && listing?.sellerId === currentUser.id;
   const isBuyer = !!currentUser && !isSeller;
   const isSold = listing?.status === 'SOLD';
+
+  const handleMessageSeller = () => {
+    if (!listing) return;
+    const existingConversation = conversations?.find(
+      (c) => c.listingId === listing.id
+    );
+
+    if (existingConversation) {
+      router.push(`/chat/${existingConversation.id}`);
+    } else {
+      router.push(`/chat/new?listingId=${listing.id}`);
+    }
+  };
 
   const handleMarkSold = async () => {
     if (!confirm('Mark this listing as sold?')) return;
@@ -156,13 +171,13 @@ export default function ListingDetailPage() {
                       </button>
                     }
                   />
-                  <Link
-                    href={`/chat?listingId=${listing.id}`}
-                    className="btn-ghost w-full"
+                  <button
+                    onClick={handleMessageSeller}
+                    className="btn-ghost w-full flex items-center justify-center gap-2"
                     id="message-seller-btn"
                   >
                     <MessageCircle size={16} /> Message Seller
-                  </Link>
+                  </button>
                 </>
               )}
 

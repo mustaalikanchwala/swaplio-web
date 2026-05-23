@@ -56,10 +56,11 @@ export function useCreateListing() {
       images: File[];
     }) => {
       const form = new FormData();
-      form.append(
-        'listing',
-        new Blob([JSON.stringify(data)], { type: 'application/json' })
-      );
+      form.append('title', data.title);
+      form.append('description', data.description);
+      form.append('price', String(data.price));
+      form.append('condition', data.condition);
+      form.append('categoryId', data.categoryId);
       images.forEach((img) => form.append('images', img));
       return api
         .post<Listing>('/api/listings', form, {
@@ -86,10 +87,11 @@ export function useEditListing(id: string) {
       newImages: File[];
     }) => {
       const form = new FormData();
-      form.append(
-        'listing',
-        new Blob([JSON.stringify(data)], { type: 'application/json' })
-      );
+      form.append('title', data.title);
+      form.append('description', data.description);
+      form.append('price', String(data.price));
+      form.append('condition', data.condition);
+      form.append('categoryId', data.categoryId);
       newImages.forEach((img) => form.append('images', img));
       return api
         .put<Listing>(`/api/listings/${id}`, form, {
