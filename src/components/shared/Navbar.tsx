@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   BookOpen,
   MessageCircle,
@@ -12,37 +12,33 @@ import {
   Menu,
   X,
   ShoppingBag,
+  Home,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import clsx from 'clsx';
-import { getToken, clearAuth, getStoredUser } from '@/lib/auth';
+import { useAuth, useLogout } from '@/hooks/useAuth';
 import { useUnreadCount } from '@/hooks/useChat';
 
 const NAV_LINKS = [
-  { href: '/', label: 'Browse', icon: BookOpen },
+  { href: '/', label: 'Home', icon: Home },
+  { href: '/listings', label: 'Browse', icon: BookOpen },
   { href: '/meetings', label: 'Meetings', icon: Calendar },
   { href: '/my-listings', label: 'My Listings', icon: ShoppingBag },
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
+function isActive(pathname: string, href: string): boolean {
+  if (href === '/') return pathname === '/';
+  if (href === '/listings') return pathname === '/listings' || (pathname.startsWith('/listings/') && !pathname.startsWith('/listings/create'));
+  return pathname === href || pathname.startsWith(href + '/');
+}
+
 export function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const { isAuthenticated, user } = useAuth();
+  const logout = useLogout();
   const { data: unreadCount = 0 } = useUnreadCount();
-
-  useEffect(() => {
-    setIsLoggedIn(!!getToken());
-  }, [pathname]);
-
-  const handleLogout = () => {
-    clearAuth();
-    router.push('/login');
-  };
-
-  const user = getStoredUser();
 
   return (
     <header className="fixed top-0 inset-x-0 z-50">
@@ -52,25 +48,23 @@ export function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-shadow">
               <span className="text-white font-bold text-sm">S</span>
             </div>
-            <span className="font-bold text-lg gradient-text tracking-tight">
-              Swaplio
-            </span>
+            <span className="font-bold text-lg gradient-text tracking-tight">Swaplio</span>
           </Link>
 
           {/* Desktop nav */}
-          {isLoggedIn && (
-            <nav className="hidden md:flex items-center gap-1">
+          {isAuthenticated && (
+            <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
               {NAV_LINKS.map(({ href, label, icon: Icon }) => (
                 <Link
                   key={href}
                   href={href}
                   className={clsx(
                     'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all',
-                    pathname === href
+                    isActive(pathname, href)
                       ? 'bg-violet-500/15 text-violet-300'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
                   )}
@@ -103,16 +97,24 @@ export function Navbar() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <>
-                <Link href="/listings/create" className="btn-primary hidden sm:inline-flex">
+                {/* User greeting */}
+                {user?.fullName && (
+                  <span className="hidden lg:block text-xs text-[var(--text-muted)] max-w-[120px] truncate">
+                    {user.fullName.split(' ')[0]}
+                  </span>
+                )}
+
+                <Link href="/listings/create" className="btn-primary hidden sm:inline-flex" id="nav-sell">
                   <PlusCircle size={15} />
                   Sell
                 </Link>
                 <button
-                  onClick={handleLogout}
+                  onClick={logout}
                   title="Log out"
                   className="p-2 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-400/10 transition-all"
+                  id="nav-logout"
                 >
                   <LogOut size={18} />
                 </button>
@@ -120,16 +122,17 @@ export function Navbar() {
                 <button
                   className="md:hidden p-2 rounded-lg text-[var(--text-secondary)] hover:bg-white/5"
                   onClick={() => setMobileOpen((v) => !v)}
+                  aria-label="Toggle mobile menu"
                 >
                   {mobileOpen ? <X size={20} /> : <Menu size={20} />}
                 </button>
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/login" className="btn-ghost text-sm px-4 py-2">
+                <Link href="/login" className="btn-ghost text-sm px-4 py-2" id="nav-login">
                   Log in
                 </Link>
-                <Link href="/register" className="btn-primary text-sm px-4 py-2">
+                <Link href="/register" className="btn-primary text-sm px-4 py-2" id="nav-register">
                   Sign up
                 </Link>
               </div>
@@ -138,7 +141,7 @@ export function Navbar() {
         </div>
 
         {/* Mobile menu */}
-        {mobileOpen && isLoggedIn && (
+        {mobileOpen && isAuthenticated && (
           <div className="md:hidden border-t border-[var(--border-subtle)] px-4 py-3 flex flex-col gap-1">
             {NAV_LINKS.map(({ href, label, icon: Icon }) => (
               <Link
@@ -147,7 +150,7 @@ export function Navbar() {
                 onClick={() => setMobileOpen(false)}
                 className={clsx(
                   'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                  pathname === href
+                  isActive(pathname, href)
                     ? 'bg-violet-500/15 text-violet-300'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
                 )}

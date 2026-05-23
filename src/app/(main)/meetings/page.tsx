@@ -6,6 +6,7 @@ import { Loader2, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 import { useBuyerMeetings, useSellerMeetings } from '@/hooks/useMeetings';
 import { MeetingCard } from '@/components/meetings/MeetingCard';
+import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import type { MeetingStatus } from '@/types';
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
@@ -18,11 +19,7 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: 'CANCELLED', label: 'Cancelled' },
 ];
 
-function MeetingList({
-  role,
-}: {
-  role: 'buyer' | 'seller';
-}) {
+function MeetingList({ role }: { role: 'buyer' | 'seller' }) {
   const [status, setStatus] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -69,7 +66,6 @@ function MeetingList({
             onChange={(e) => setStartDate(e.target.value)}
             className="input w-36 text-xs py-1.5"
             style={{ colorScheme: 'dark' }}
-            placeholder="From"
           />
           <span className="text-[var(--text-muted)] text-xs">to</span>
           <input
@@ -78,7 +74,6 @@ function MeetingList({
             onChange={(e) => setEndDate(e.target.value)}
             className="input w-36 text-xs py-1.5"
             style={{ colorScheme: 'dark' }}
-            placeholder="To"
           />
         </div>
       </div>
@@ -106,36 +101,38 @@ function MeetingList({
 
 export default function MeetingsPage() {
   return (
-    <div className="page-wrapper max-w-3xl">
-      <h1 className="text-2xl font-bold gradient-text mb-6">Meetings</h1>
+    <ProtectedRoute>
+      <div className="page-wrapper max-w-3xl">
+        <h1 className="text-2xl font-bold gradient-text mb-6">Meetings</h1>
 
-      <Tabs.Root defaultValue="buying">
-        <Tabs.List className="flex gap-1 glass p-1 rounded-xl mb-6 w-fit">
-          {[
-            { value: 'buying', label: 'Buying' },
-            { value: 'selling', label: 'Selling' },
-          ].map(({ value, label }) => (
-            <Tabs.Trigger
-              key={value}
-              value={value}
-              className={clsx(
-                'px-5 py-2 rounded-lg text-sm font-medium transition-all',
-                'data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300',
-                'data-[state=inactive]:text-[var(--text-muted)] data-[state=inactive]:hover:text-[var(--text-primary)]'
-              )}
-            >
-              {label}
-            </Tabs.Trigger>
-          ))}
-        </Tabs.List>
+        <Tabs.Root defaultValue="buying">
+          <Tabs.List className="flex gap-1 glass p-1 rounded-xl mb-6 w-fit">
+            {[
+              { value: 'buying', label: 'Buying' },
+              { value: 'selling', label: 'Selling' },
+            ].map(({ value, label }) => (
+              <Tabs.Trigger
+                key={value}
+                value={value}
+                className={clsx(
+                  'px-5 py-2 rounded-lg text-sm font-medium transition-all',
+                  'data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300',
+                  'data-[state=inactive]:text-[var(--text-muted)] data-[state=inactive]:hover:text-[var(--text-primary)]'
+                )}
+              >
+                {label}
+              </Tabs.Trigger>
+            ))}
+          </Tabs.List>
 
-        <Tabs.Content value="buying">
-          <MeetingList role="buyer" />
-        </Tabs.Content>
-        <Tabs.Content value="selling">
-          <MeetingList role="seller" />
-        </Tabs.Content>
-      </Tabs.Root>
-    </div>
+          <Tabs.Content value="buying">
+            <MeetingList role="buyer" />
+          </Tabs.Content>
+          <Tabs.Content value="selling">
+            <MeetingList role="seller" />
+          </Tabs.Content>
+        </Tabs.Root>
+      </div>
+    </ProtectedRoute>
   );
 }

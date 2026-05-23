@@ -14,8 +14,10 @@ export interface User {
 
 export interface AuthResponse {
   token: string;
-  user: User;
+  email: string;
+  fullName: string;
 }
+
 
 export interface RegisterRequest {
   fullName: string;
@@ -36,6 +38,8 @@ export type ListingStatus = 'ACTIVE' | 'SOLD';
 export interface ListingImage {
   id: string;
   signedUrl: string;
+  isPrimary: boolean;
+  displayOrder: number;
 }
 
 export interface Listing {
@@ -70,6 +74,7 @@ export interface EditListingRequest extends CreateListingRequest {
 export interface Category {
   id: string;
   name: string;
+  slug?: string;
 }
 
 // ── MEETINGS ─────────────────────────────────────────────────────────────────

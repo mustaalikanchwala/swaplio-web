@@ -1,13 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { useRegister } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { useRegister, useAuth } from '@/hooks/useAuth';
 
 const schema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -19,13 +20,22 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterPage() {
   const { mutateAsync, isPending } = useRegister();
+  const { isAuthenticated, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  // Redirect already-authenticated users away
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -34,6 +44,8 @@ export default function RegisterPage() {
       toast.error('Registration failed. Email may already be in use.');
     }
   };
+
+  if (isLoading || isAuthenticated) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">

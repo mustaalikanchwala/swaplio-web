@@ -19,7 +19,7 @@ import { useListing, useMarkSold, useDeleteListing } from '@/hooks/useListings';
 import { ImageCarousel } from '@/components/listings/ImageCarousel';
 import { ConditionBadge } from '@/components/ui/ConditionBadge';
 import { RequestMeetingDialog } from '@/components/meetings/RequestMeetingDialog';
-import { getStoredUser } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 function formatPrice(price: number) {
   return Number.isInteger(price) ? `₹${price}` : `₹${price.toFixed(2)}`;
@@ -29,7 +29,7 @@ export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const currentUser = getStoredUser();
+  const { user: currentUser } = useAuth();
 
   const { data: listing, isLoading, isError } = useListing(id);
   const { mutateAsync: markSold, isPending: isMarkingSold } = useMarkSold(id);

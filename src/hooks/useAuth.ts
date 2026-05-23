@@ -1,29 +1,37 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+// ─────────────────────────────────────────────────────────────────────────────
+// useAuth.ts — re-exports from AuthContext + auth mutation hooks
+//
+// All components use useAuth() for reactive auth state.
+// Login/register mutations call context.login() to commit state globally.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { useAuth } from '@/context/AuthContext';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { clearAuth, setStoredUser, setToken, getStoredUser, getToken } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 import type { AuthResponse, LoginRequest, RegisterRequest, User } from '@/types';
 
-// ── Read cached auth from localStorage (client-side only) ────────────────────
-export function useCurrentUser(): User | null {
-  return typeof window !== 'undefined' ? getStoredUser() : null;
-}
-
-export function useIsAuthenticated(): boolean {
-  return typeof window !== 'undefined' ? !!getToken() : false;
-}
-
-// ── Register ─────────────────────────────────────────────────────────────────
+// ── Register ──────────────────────────────────────────────────────────────────
 export function useRegister() {
+  const auth = useAuth();
   const router = useRouter();
+
   return useMutation({
     mutationFn: (data: RegisterRequest) =>
       api.post<AuthResponse>('/api/auth/register', data).then((r) => r.data),
-    onSuccess: ({ token, user }) => {
-      setToken(token);
-      setStoredUser(user);
+    onSuccess: async ({ token, email, fullName }) => {
+      // Commit token to cookie first so the /me call can authenticate
+      auth.login(token, {
+        id: '',          // temporary — will be overwritten by /me response
+        email,
+        fullName,
+      });
+      // Fetch full profile (gets id, phone, bio, etc.)
+      await auth.refreshUser();
       router.push('/');
     },
   });
@@ -31,13 +39,21 @@ export function useRegister() {
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 export function useLogin() {
+  const auth = useAuth();
   const router = useRouter();
+
   return useMutation({
     mutationFn: (data: LoginRequest) =>
       api.post<AuthResponse>('/api/auth/login', data).then((r) => r.data),
-    onSuccess: ({ token, user }) => {
-      setToken(token);
-      setStoredUser(user);
+    onSuccess: async ({ token, email, fullName }) => {
+      // Commit token to cookie first so the /me call can authenticate
+      auth.login(token, {
+        id: '',
+        email,
+        fullName,
+      });
+      // Fetch full profile to get id, phone, bio, etc.
+      await auth.refreshUser();
       router.push('/');
     },
   });
@@ -45,31 +61,55 @@ export function useLogin() {
 
 // ── Logout ────────────────────────────────────────────────────────────────────
 export function useLogout() {
-  const router = useRouter();
+  const auth = useAuth();
+  const queryClient = useQueryClient();
   return () => {
-    clearAuth();
-    router.push('/login');
+    queryClient.clear(); // clear all cached query data on logout
+    auth.logout();
   };
 }
 
-// ── Get my profile ────────────────────────────────────────────────────────────
-export function useProfile() {
-  return useQuery<User>({
-    queryKey: ['profile'],
-    queryFn: () => api.get<User>('/api/users/me').then((r) => r.data),
-    staleTime: 5 * 60 * 1000,
-  });
+// ── Get my profile (from AuthContext — no extra network call needed) ──────────
+export function useCurrentUser(): User | null {
+  const { user } = useAuth();
+  return user;
 }
 
-// ── Update profile ────────────────────────────────────────────────────────────
+export function useIsAuthenticated(): boolean {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated;
+}
+
+// ── Fetch + update profile mutations ─────────────────────────────────────────
+
+export function useProfile() {
+  // Profile data lives in AuthContext.user — expose a consistent interface
+  const { user, isLoading, refreshUser } = useAuth();
+  return {
+    data: user ?? undefined,
+    isLoading,
+    refetch: refreshUser,
+  };
+}
+
 export function useUpdateProfile() {
+  const auth = useAuth();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (data: Partial<User>) =>
       api.put<User>('/api/users/me', data).then((r) => r.data),
-    onSuccess: (user) => {
-      setStoredUser(user);
-      queryClient.setQueryData(['profile'], user);
+    onSuccess: async () => {
+      // Re-fetch from server to get canonical data
+      await auth.refreshUser();
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
   });
+}
+
+// ── Stored user (legacy compat) ───────────────────────────────────────────────
+export function getStoredUser(): User | null {
+  // Kept for any code that imported this — returns null at module level
+  // (caller should use useAuth() inside a component instead)
+  return null;
 }

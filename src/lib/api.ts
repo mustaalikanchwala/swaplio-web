@@ -1,9 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Axios instance with JWT request & 401 response interceptors
+// Axios instance — centralized API client with JWT injection + 401 handling
 // ─────────────────────────────────────────────────────────────────────────────
 
 import axios from 'axios';
-import { clearAuth, getToken } from './auth';
+import { getToken, clearAuth } from './auth';
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'https://swaplio-backend.onrender.com';
@@ -13,7 +13,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach JWT to every request
+// ── Request interceptor: attach JWT from cookie on every request ──────────────
 api.interceptors.request.use((config) => {
   const token = getToken();
   if (token) {
@@ -22,15 +22,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// On 401 → clear auth state and redirect to login
+// ── Response interceptor: on 401 wipe auth and redirect to login ──────────────
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
       clearAuth();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
+      // Hard redirect so React state is fully reset
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

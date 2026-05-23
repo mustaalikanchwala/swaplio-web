@@ -238,3 +238,51 @@ body {
 .fade-in-up {
   animation: fadeInUp 0.4s ease forwards;
 }
+
+/* ── Product Slider ─────────────────────────────────────────────────────────── */
+.product-slider {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 8px;
+  padding-right: 1.5rem;
+}
+
+.product-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.product-card-snap {
+  flex-shrink: 0;
+  width: min(72vw, 240px);
+  scroll-snap-align: start;
+}
+
+@media (min-width: 640px) {
+  .product-card-snap {
+    width: 230px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-card-snap {
+    width: 248px;
+  }
+}
+
+/* ── Section entrance animation ─────────────────────────────────────────────── */
+@keyframes sectionEnter {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Floating animation (hero section) ──────────────────────────────────────── */
+@keyframes floatY {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%       { transform: translateY(-12px) rotate(3deg); }
+}
+

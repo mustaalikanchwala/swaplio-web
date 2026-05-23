@@ -2,9 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { getToken } from '@/lib/auth';
-import { useEffect, useState } from 'react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,19 +14,19 @@ const queryClient = new QueryClient({
   },
 });
 
-// Inner component — needs to be inside QueryClientProvider to use hooks
+// Connects WebSocket only when the user is fully authenticated.
+// Lives inside AuthProvider so it can read isAuthenticated reactively.
 function GlobalWebSocket() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  // Only connect when the user is logged in
-  const hasToken = mounted ? !!getToken() : false;
-  useWebSocket(hasToken ? {} : { onNotification: undefined });
+  const { isAuthenticated } = useAuth();
+  // Only mount the STOMP connection when authenticated
+  useWebSocket(isAuthenticated ? {} : { onNotification: undefined });
   return null;
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+// Inner layer: needs QueryClientProvider AND AuthProvider in scope
+function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
+    <AuthProvider>
       <GlobalWebSocket />
       {children}
       <Toaster
@@ -41,6 +40,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
           },
         }}
       />
+    </AuthProvider>
+  );
+}
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppProviders>{children}</AppProviders>
     </QueryClientProvider>
   );
 }
