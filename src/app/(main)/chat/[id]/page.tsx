@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getToken } from '@/lib/auth';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@/types';
 
 export default function ChatRoomPage() {
@@ -44,18 +45,30 @@ export default function ChatRoomPage() {
     ? listing.sellerName
     : 'New Message';
 
+  const queryClient = useQueryClient();
+
   // Load message history (disabled for new conversations)
   const { data: messages = [], isLoading } = useMessages(localConversationId ?? '');
 
+  // When a conversation is opened, the REST call to load messages marks them as read
+  // on the backend. Invalidate badge + conversation list immediately so the UI reflects
+  // the updated unread count without waiting for the 30s poll.
+  useEffect(() => {
+    if (!localConversationId) return;
+    queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+  }, [localConversationId, queryClient]);
+
   // Subscribe to conversation topic via WebSocket
-  // On first-message: subscribe to /user/queue/notifications to discover new conversationId
+  // On first-message: subscribe to /user/queue/reply to discover new conversationId
   useWebSocket({
     conversationId: localConversationId ?? undefined,
     onMessage: () => {
       // Auto-scroll handled by the useEffect below
     },
-    onNotification: (msg: Message) => {
-      // First-message case: a MessageResponse arrives containing the new conversationId
+    onReply: (msg: Message) => {
+      // First-message case: backend sends MessageResponse with new conversationId
+      // via /user/queue/reply specifically for the sender's discovery.
       if (!localConversationId && msg.conversationId) {
         setLocalConversationId(msg.conversationId);
         // Update URL without reloading

@@ -35,7 +35,7 @@ export function useUnreadCount() {
     queryFn: () =>
       api.get<number>('/api/chat/unread-count').then((r) => r.data),
     staleTime: 0,
-    refetchInterval: 30 * 1000000,
+    refetchInterval: 30 * 1000, // poll every 30 s as a reliable fallback
   });
 }
 
