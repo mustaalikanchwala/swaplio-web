@@ -1,254 +1,153 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { useListings } from '@/hooks/useListings';
+import { HeroSection } from '@/components/home/HeroSection';
+import { CategorySection } from '@/components/listings/CategorySection';
 import { useCategories } from '@/hooks/useCategories';
-import { ListingCard } from '@/components/listings/ListingCard';
-import { ListingGrid, ListingCardSkeleton } from '@/components/listings/ListingGrid';
-import type { Condition, ListingFilterParams } from '@/types';
-import clsx from 'clsx';
-import { useInView } from 'react-intersection-observer';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { ArrowRight, LayoutGrid } from 'lucide-react';
 
-const CONDITIONS: { value: Condition; label: string }[] = [
-  { value: 'NEW', label: 'Brand New' },
-  { value: 'LIKE_NEW', label: 'Like New' },
-  { value: 'GOOD', label: 'Good' },
-  { value: 'FAIR', label: 'Fair' },
-];
+// ─── Skeleton shown while categories are loading ──────────────────────────────
+
+function PageSkeleton() {
+  return (
+    <div>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="py-10 px-4 sm:px-6 max-w-[1400px] mx-auto"
+          style={{ borderTop: '1px solid rgba(139,92,246,0.07)' }}
+        >
+          {/* Header skeleton */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="skeleton w-10 h-10 rounded-xl" />
+              <div className="flex flex-col gap-1.5">
+                <div className="skeleton h-6 w-36 rounded-md" />
+                <div className="skeleton h-3 w-24 rounded-md" />
+              </div>
+            </div>
+            <div className="skeleton h-9 w-24 rounded-xl" />
+          </div>
+          {/* Cards skeleton row */}
+          <div className="flex gap-4 overflow-hidden">
+            {Array.from({ length: 5 }).map((_, j) => (
+              <div key={j} className="flex-shrink-0 w-56">
+                <div
+                  className="rounded-2xl border overflow-hidden"
+                  style={{
+                    background: 'rgba(13,9,22,0.75)',
+                    borderColor: 'rgba(139,92,246,0.10)',
+                  }}
+                >
+                  <div className="skeleton aspect-[4/3]" />
+                  <div className="p-4 flex flex-col gap-2.5">
+                    <div className="skeleton h-3.5 w-4/5 rounded-md" />
+                    <div className="skeleton h-3 w-2/5 rounded-md" />
+                    <div className="flex justify-between mt-1">
+                      <div className="skeleton h-5 w-1/3 rounded-md" />
+                      <div className="skeleton h-4 w-1/4 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Homepage ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const [page, setPage] = useState(0);
-  const [allListings, setAllListings] = useState<import('@/types').Listing[]>([]);
-  const [filters, setFilters] = useState<ListingFilterParams>({});
-  const [search, setSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-
-  const { data: categories = [] } = useCategories();
-
-  const { data, isFetching } = useListings({ ...filters, page, size: 12 });
-
-  // Accumulate pages for Load More
-  useEffect(() => {
-    if (page === 0) {
-      setAllListings(data?.content ?? []);
-    } else {
-      setAllListings((prev) => [...prev, ...(data?.content ?? [])]);
-    }
-  }, [data, page]);
-
-  // Reset to page 0 when filters change
-  useEffect(() => {
-    setPage(0);
-  }, [filters]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFilters((f) => ({ ...f, keyword: search || undefined }));
-  };
-
-  const setCategory = (id?: string) => {
-    setFilters((f) => ({ ...f, categoryId: id }));
-  };
-
-  const setCondition = (c?: Condition) => {
-    setFilters((f) => ({ ...f, condition: c }));
-  };
-
-  const clearFilters = () => {
-    setFilters({});
-    setSearch('');
-  };
-
-  const hasMore = data ? !data.last : false;
-  const isFiltered = Object.keys(filters).some((k) => filters[k as keyof ListingFilterParams] !== undefined);
+  const { data: categories = [], isLoading, isError } = useCategories();
 
   return (
-    <div className="page-wrapper">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold gradient-text mb-1">Browse Listings</h1>
-        <p className="text-[var(--text-muted)] text-sm">
-          Find second-hand study materials from students near you
-        </p>
-      </div>
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      {/* ── Hero ── */}
+      <HeroSection />
 
-      {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-5">
-        <div className="relative flex-1">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-          />
-          <input
-            type="search"
-            placeholder="Search textbooks, notes, equipment..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input pl-9"
-            id="listing-search"
-          />
+      {/* ── Divider ── */}
+      <div
+        className="w-full h-px"
+        style={{
+          background:
+            'linear-gradient(to right, transparent, rgba(139,92,246,0.25), transparent)',
+        }}
+      />
+
+      {/* ── Section label ── */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-8 pb-2">
+        <div className="flex items-center gap-2 text-xs font-semibold tracking-widest uppercase"
+          style={{ color: 'rgba(139,92,246,0.6)' }}>
+          <LayoutGrid size={13} />
+          <span>Browse by Category</span>
         </div>
-        <button type="submit" className="btn-primary px-5">Search</button>
-        <button
-          type="button"
-          onClick={() => setShowFilters((v) => !v)}
-          className={clsx(
-            'btn-ghost px-3',
-            showFilters && 'bg-violet-500/15 border-violet-500/40 text-violet-300'
-          )}
-          aria-label="Toggle filters"
-        >
-          <SlidersHorizontal size={18} />
-        </button>
-      </form>
-
-      {/* Category chips */}
-      <div className="flex gap-2 flex-wrap mb-4">
-        <button
-          onClick={() => setCategory(undefined)}
-          className={clsx(
-            'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
-            !filters.categoryId
-              ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-              : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40 hover:text-[var(--text-primary)]'
-          )}
-        >
-          All
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setCategory(cat.id)}
-            className={clsx(
-              'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
-              filters.categoryId === cat.id
-                ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40 hover:text-[var(--text-primary)]'
-            )}
-          >
-            {cat.name}
-          </button>
-        ))}
       </div>
 
-      {/* Expandable filters */}
-      {showFilters && (
-        <div className="glass p-4 mb-5 flex flex-wrap gap-4 fade-in-up">
-          {/* Condition filter */}
-          <div>
-            <p className="label mb-2">Condition</p>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setCondition(undefined)}
-                className={clsx(
-                  'px-3 py-1 rounded-lg text-xs border transition-all',
-                  !filters.condition
-                    ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                    : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40'
-                )}
-              >
-                Any
-              </button>
-              {CONDITIONS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setCondition(value)}
-                  className={clsx(
-                    'px-3 py-1 rounded-lg text-xs border transition-all',
-                    filters.condition === value
-                      ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                      : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40'
-                  )}
-                >
-                  {label}
-                </button>
+      {/* ── Category Sections ── */}
+      {isLoading && <PageSkeleton />}
+
+      {isError && (
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-20 text-center">
+          <p className="text-[var(--text-muted)] text-lg mb-2">
+            Failed to load categories
+          </p>
+          <p className="text-[var(--text-muted)] text-sm">
+            Please refresh the page or check your connection.
+          </p>
+        </div>
+      )}
+
+      {!isLoading && !isError && (
+        <>
+          {categories.length === 0 ? (
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-20 text-center">
+              <p className="text-[var(--text-muted)] text-lg">No categories available yet.</p>
+            </div>
+          ) : (
+            <div>
+              {categories.map((category, index) => (
+                // CategorySection handles its own null-rendering when empty
+                <CategorySection
+                  key={category.id}
+                  category={category}
+                  index={index}
+                />
               ))}
             </div>
-          </div>
-
-          {/* Price range */}
-          <div className="flex items-end gap-2">
-            <div>
-              <p className="label mb-2">Min ₹</p>
-              <input
-                type="number"
-                min={0}
-                placeholder="0"
-                value={filters.minPrice ?? ''}
-                onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    minPrice: e.target.value ? Number(e.target.value) : undefined,
-                  }))
-                }
-                className="input w-28"
-              />
-            </div>
-            <div>
-              <p className="label mb-2">Max ₹</p>
-              <input
-                type="number"
-                min={0}
-                placeholder="Any"
-                value={filters.maxPrice ?? ''}
-                onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    maxPrice: e.target.value ? Number(e.target.value) : undefined,
-                  }))
-                }
-                className="input w-28"
-              />
-            </div>
-          </div>
-
-          {isFiltered && (
-            <button
-              onClick={clearFilters}
-              className="btn-ghost text-xs flex items-center gap-1.5 self-end"
-            >
-              <X size={12} /> Clear filters
-            </button>
           )}
-        </div>
+        </>
       )}
 
-      {/* Results count */}
-      {data && !isFetching && (
-        <p className="text-xs text-[var(--text-muted)] mb-4">
-          {data.totalElements} listing{data.totalElements !== 1 ? 's' : ''} found
-        </p>
-      )}
-
-      {/* Listing grid */}
-      {allListings.length === 0 && !isFetching ? (
-        <div className="glass p-16 text-center">
-          <p className="text-[var(--text-muted)] text-lg">No listings found</p>
-          <p className="text-[var(--text-muted)] text-sm mt-1">Try adjusting your filters</p>
-        </div>
-      ) : (
-        <ListingGrid>
-          {allListings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} className="fade-in-up" />
-          ))}
-          {isFetching &&
-            Array.from({ length: 4 }).map((_, i) => (
-              <ListingCardSkeleton key={`sk-${i}`} />
-            ))}
-        </ListingGrid>
-      )}
-
-      {/* Load More */}
-      {hasMore && !isFetching && (
-        <div className="flex justify-center mt-8">
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            className="btn-ghost px-8"
+      {/* ── Browse All Footer CTA ── */}
+      {!isLoading && !isError && categories.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="py-16 px-4 sm:px-6 text-center"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(139,92,246,0.05), transparent)',
+            borderTop: '1px solid rgba(139,92,246,0.10)',
+          }}
+        >
+          <p className="text-[var(--text-muted)] text-sm mb-4">
+            Can&apos;t find what you&apos;re looking for?
+          </p>
+          <Link
+            href="/listings"
+            className="inline-flex items-center gap-2 btn-primary px-8 py-3 text-base"
+            id="browse-all-listings-cta"
           >
-            Load more
-          </button>
-        </div>
+            Browse All Listings
+            <ArrowRight size={16} />
+          </Link>
+        </motion.div>
       )}
     </div>
   );
