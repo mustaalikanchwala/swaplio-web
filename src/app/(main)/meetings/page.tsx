@@ -2,12 +2,13 @@
 
 import * as Tabs from '@radix-ui/react-tabs';
 import { useState } from 'react';
-import { Loader2, Calendar } from 'lucide-react';
+import { Loader2, Calendar, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
 import { useBuyerMeetings, useSellerMeetings } from '@/hooks/useMeetings';
 import { MeetingCard } from '@/components/meetings/MeetingCard';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
-import type { MeetingStatus } from '@/types';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: '', label: 'All' },
@@ -39,22 +40,24 @@ function MeetingList({ role }: { role: 'buyer' | 'seller' }) {
   return (
     <div>
       {/* Filters bar */}
-      <div className="flex flex-wrap gap-3 mb-5">
+      <div className="flex flex-wrap gap-4 mb-6">
         {/* Status chips */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {STATUS_FILTERS.map(({ value, label }) => (
-            <button
+            <motion.button
               key={value}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setStatus(value)}
               className={clsx(
-                'px-3 py-1 rounded-full text-xs font-medium border transition-all',
+                'px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200',
                 status === value
-                  ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                  : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40'
+                  ? 'border-accent/40 bg-accent/20 text-white'
+                  : 'border-bg-border bg-bg-elevated text-text-secondary hover:border-white/20 hover:text-white'
               )}
             >
               {label}
-            </button>
+            </motion.button>
           ))}
         </div>
 
@@ -64,15 +67,15 @@ function MeetingList({ role }: { role: 'buyer' | 'seller' }) {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="input w-36 text-xs py-1.5"
+            className="input w-36 text-xs py-1.5 rounded-full"
             style={{ colorScheme: 'dark' }}
           />
-          <span className="text-[var(--text-muted)] text-xs">to</span>
+          <span className="text-text-muted text-xs font-sans">to</span>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="input w-36 text-xs py-1.5"
+            className="input w-36 text-xs py-1.5 rounded-full"
             style={{ colorScheme: 'dark' }}
           />
         </div>
@@ -81,17 +84,32 @@ function MeetingList({ role }: { role: 'buyer' | 'seller' }) {
       {/* List */}
       {query.isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 size={28} className="animate-spin text-violet-400" />
+          <Loader2 size={28} className="animate-spin text-accent" />
         </div>
       ) : meetings.length === 0 ? (
-        <div className="glass p-12 text-center">
-          <Calendar size={40} className="text-[var(--text-muted)] opacity-30 mx-auto mb-3" />
-          <p className="text-[var(--text-muted)]">No meetings found</p>
+        <div className="glass p-12 text-center flex flex-col items-center justify-center gap-4">
+          <Calendar size={48} className="text-text-muted opacity-30 mx-auto" />
+          <h2 className="text-2xl font-serif text-white">No meetings scheduled</h2>
+          <p className="text-text-secondary text-sm max-w-sm">You don&apos;t have any meeting requests yet. Go ahead and find something to buy or list something for sale.</p>
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+            <Link href="/listings" className="btn-primary">
+              <span>Browse Listings</span>
+              <span className="btn-primary-circle">
+                <ArrowRight size={16} />
+              </span>
+            </Link>
+          </motion.div>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {meetings.map((meeting) => (
-            <MeetingCard key={meeting.id} meeting={meeting} role={role} />
+          {meetings.map((meeting, index) => (
+            <MeetingCard
+              key={meeting.id}
+              meeting={meeting}
+              role={role}
+              style={{ animationDelay: `${index * 0.05}s` }}
+              className="fade-in-up"
+            />
           ))}
         </div>
       )}
@@ -102,11 +120,16 @@ function MeetingList({ role }: { role: 'buyer' | 'seller' }) {
 export default function MeetingsPage() {
   return (
     <ProtectedRoute>
-      <div className="page-wrapper max-w-3xl">
-        <h1 className="text-2xl font-bold gradient-text mb-6">Meetings</h1>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="page-wrapper max-w-3xl font-sans"
+      >
+        <h1 className="text-3xl font-bold font-serif text-white mb-6">Meetings</h1>
 
         <Tabs.Root defaultValue="buying">
-          <Tabs.List className="flex gap-1 glass p-1 rounded-xl mb-6 w-fit">
+          <Tabs.List className="flex gap-1 bg-bg-elevated border border-bg-border p-1 rounded-full mb-6 w-fit shadow-inner">
             {[
               { value: 'buying', label: 'Buying' },
               { value: 'selling', label: 'Selling' },
@@ -115,9 +138,9 @@ export default function MeetingsPage() {
                 key={value}
                 value={value}
                 className={clsx(
-                  'px-5 py-2 rounded-lg text-sm font-medium transition-all',
-                  'data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300',
-                  'data-[state=inactive]:text-[var(--text-muted)] data-[state=inactive]:hover:text-[var(--text-primary)]'
+                  'px-6 py-2 rounded-full text-sm font-semibold transition-all duration-250',
+                  'data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-glow-sm',
+                  'data-[state=inactive]:text-text-secondary data-[state=inactive]:hover:text-white'
                 )}
               >
                 {label}
@@ -132,7 +155,7 @@ export default function MeetingsPage() {
             <MeetingList role="seller" />
           </Tabs.Content>
         </Tabs.Root>
-      </div>
+      </motion.div>
     </ProtectedRoute>
   );
 }

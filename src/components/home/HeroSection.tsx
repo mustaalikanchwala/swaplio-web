@@ -2,189 +2,162 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Search, Sparkles, ArrowRight, ShoppingBag } from 'lucide-react';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { ArrowRight } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import Hls from 'hls.js';
 
-const FLOATING_ITEMS = [
-  { emoji: '📚', delay: 0, x: '8%', y: '20%', size: 'text-3xl' },
-  { emoji: '💻', delay: 0.4, x: '80%', y: '15%', size: 'text-2xl' },
-  { emoji: '🔬', delay: 0.8, x: '90%', y: '65%', size: 'text-3xl' },
-  { emoji: '✏️', delay: 0.2, x: '5%', y: '72%', size: 'text-2xl' },
-  { emoji: '📝', delay: 1.1, x: '60%', y: '80%', size: 'text-xl' },
-  { emoji: '🎒', delay: 0.6, x: '35%', y: '8%', size: 'text-2xl' },
-];
+const videoSrc = "https://stream.mux.com/T6oQJQ02cQ6N01TR6iHwZkKFkbepS34dkkIc9iukgy400g.m3u8";
+const posterUrl = "https://images.unsplash.com/photo-1647356191320-d7a1f80ca777?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGRhcmslMjB0ZWNobm9sb2d5JTIwbmV1cmFsJTIwbmV0d29ya3xlbnwxfHx8fDE3Njg5NzIyNTV8MA&ixlib=rb-4.1.0&q=80&w=1080";
 
 export function HeroSection() {
-  const [search, setSearch] = useState('');
-  const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (search.trim()) {
-      router.push(`/listings?keyword=${encodeURIComponent(search.trim())}`);
-    } else {
-      router.push('/listings');
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(videoSrc);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch((e) => console.log("Autoplay prevented:", e));
+      });
+      return () => {
+        hls.destroy();
+      };
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Safari native HLS support
+      video.src = videoSrc;
+      video.addEventListener("loadedmetadata", () => {
+        video.play().catch((e) => console.log("Autoplay prevented:", e));
+      });
     }
-  };
+  }, []);
 
   return (
     <section
-      className="relative overflow-hidden"
-      style={{
-        background: 'linear-gradient(160deg, rgba(139,92,246,0.15) 0%, rgba(13,9,22,0) 45%, rgba(236,72,153,0.08) 100%)',
-        minHeight: '440px',
-      }}
+      className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-black"
       aria-label="Hero section"
     >
-      {/* Mesh grid */}
+      {/* Layer 1 — the video itself */}
+      <video
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-cover opacity-60 z-0"
+        muted
+        loop
+        playsInline
+        poster={posterUrl}
+      />
+
+      {/* Layer 2 — dark overlay on top of the video */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10" />
+
+      {/* Mesh grid background */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-30 z-10"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(139,92,246,0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139,92,246,0.05) 1px, transparent 1px)
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
           `,
-          backgroundSize: '48px 48px',
+          backgroundSize: '64px 64px',
         }}
       />
 
-      {/* Large ambient glow */}
+      {/* Decorative gradient orbs */}
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/4 w-[800px] h-[400px] rounded-full pointer-events-none"
+        className="absolute top-[-20%] left-[20%] w-[600px] h-[600px] rounded-full pointer-events-none mix-blend-screen opacity-70 z-10"
         style={{
-          background: 'radial-gradient(ellipse, rgba(139,92,246,0.12) 0%, transparent 70%)',
-          filter: 'blur(60px)',
+          background: 'radial-gradient(circle, rgba(30, 58, 138, 0.25) 0%, transparent 70%)',
+          filter: 'blur(120px)',
+        }}
+      />
+      <div
+        className="absolute bottom-[-10%] right-[20%] w-[500px] h-[500px] rounded-full pointer-events-none mix-blend-screen opacity-70 z-10"
+        style={{
+          background: 'radial-gradient(circle, rgba(49, 46, 129, 0.25) 0%, transparent 70%)',
+          filter: 'blur(120px)',
         }}
       />
 
-      {/* Floating emoji items */}
-      {FLOATING_ITEMS.map((item, i) => (
-        <motion.div
-          key={i}
-          className={`absolute pointer-events-none select-none ${item.size}`}
-          style={{ left: item.x, top: item.y }}
-          animate={{
-            y: [0, -12, 0],
-            rotate: [-3, 3, -3],
-            opacity: [0.4, 0.65, 0.4],
-          }}
-          transition={{
-            duration: 4 + i * 0.5,
-            delay: item.delay,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        >
-          {item.emoji}
-        </motion.div>
-      ))}
-
-      {/* Content */}
-      <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 py-20 flex flex-col items-center text-center">
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-6"
-          style={{
-            background: 'rgba(139,92,246,0.1)',
-            borderColor: 'rgba(139,92,246,0.3)',
-            color: '#a78bfa',
-          }}
-        >
-          <Sparkles size={13} />
-          <span className="text-xs font-semibold tracking-wide">Student Marketplace</span>
-        </motion.div>
-
-        {/* Headline */}
-        <motion.h1
+      {/* Content Container */}
+      <div className="relative z-20 max-w-5xl mx-auto text-center mt-32 px-6 flex flex-col items-center space-y-8">
+        
+        {/* Pre-headline */}
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-4"
-          style={{ color: '#f0eafa' }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="font-serif text-3xl sm:text-5xl lg:text-[48px] text-white leading-tight"
         >
-          Buy & Sell{' '}
-          <span
-            className="gradient-text"
-            style={{
-              background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            Study Essentials
-          </span>
-          <br className="hidden sm:block" />
-          <span className="text-[var(--text-secondary)]"> with Students Like You</span>
-        </motion.h1>
-
-        {/* Subtext */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="text-base sm:text-lg text-[var(--text-muted)] max-w-xl mb-8"
-        >
-          Textbooks, lab gear, notes and more — find deals from your campus community.
+          Find. Negotiate. Exchange.
         </motion.p>
 
-        {/* Search bar */}
-        <motion.form
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          onSubmit={handleSearch}
-          className="flex w-full max-w-lg gap-2 mb-8"
-          role="search"
+        {/* Main Headline */}
+        <motion.h1
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+          className="font-sans font-semibold text-6xl sm:text-8xl lg:text-[110px] leading-[0.9] tracking-tighter bg-gradient-to-b from-white via-white to-[#b4c0ff] bg-clip-text text-transparent"
         >
-          <div className="relative flex-1">
-            <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-            />
-            <input
-              type="search"
-              placeholder="Search textbooks, notes, equipment..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input pl-10 h-12"
-              id="hero-search"
-              aria-label="Search listings"
-            />
-          </div>
-          <button type="submit" className="btn-primary px-6 h-12 flex-shrink-0">
-            Search
-          </button>
-        </motion.form>
+          Student
+          <br />
+          Marketplace
+        </motion.h1>
 
-        {/* Quick CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="flex items-center gap-3 flex-wrap justify-center"
+        {/* Subheadline */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.7 }}
+          transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
+          className="font-sans text-lg sm:text-xl text-white max-w-xl mx-auto"
         >
-          <Link
-            href="/listings"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            id="browse-all-cta"
+          Buy and sell textbooks, notes, and study materials with students from your college.
+        </motion.p>
+
+        {/* CTA buttons row */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6, ease: 'easeOut' }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto pt-4"
+        >
+          {/* Primary CTA */}
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="w-full sm:w-auto"
           >
-            <ShoppingBag size={15} />
-            Browse all listings
-            <ArrowRight size={13} />
-          </Link>
-          <span className="text-[var(--text-muted)] text-xs">or</span>
-          <Link
-            href="/listings/create"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-violet-400 hover:text-violet-300 transition-colors"
-            id="sell-now-cta"
+            <Link
+              href="/listings/create"
+              className="btn-primary w-full sm:w-auto"
+              id="hero-sell-free"
+            >
+              <span>Start Selling Free</span>
+              <span className="btn-primary-circle">
+                <ArrowRight size={20} />
+              </span>
+            </Link>
+          </motion.div>
+
+          {/* Secondary CTA */}
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="w-full sm:w-auto"
           >
-            Sell something →
-          </Link>
+            <Link
+              href="/listings"
+              className="btn-ghost w-full sm:w-auto flex items-center justify-center gap-2 group px-6"
+              id="hero-browse"
+            >
+              <span>Browse Listings</span>
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
         </motion.div>
       </div>
     </section>

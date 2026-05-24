@@ -19,6 +19,7 @@ import { useCreateListing } from '@/hooks/useListings';
 import { useCategories } from '@/hooks/useCategories';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import type { Condition } from '@/types';
+import { motion } from 'framer-motion';
 
 const schema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -86,30 +87,35 @@ export default function CreateListingPage() {
 
   return (
     <ProtectedRoute>
-      <div className="page-wrapper max-w-2xl">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="page-wrapper max-w-2xl font-sans"
+      >
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-6 transition-colors font-medium"
         >
           <ArrowLeft size={15} /> Back
         </Link>
 
-        <h1 className="text-2xl font-bold gradient-text mb-6">Create Listing</h1>
+        <h1 className="text-4xl font-bold font-serif text-white mb-6">Create Listing</h1>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Image upload */}
-          <div className="glass p-5">
-            <p className="label mb-3">Photos <span className="text-[var(--text-muted)] normal-case font-normal">({images.length}/5)</span></p>
-            <div className="grid grid-cols-4 gap-3">
+          <div className="glass p-6">
+            <p className="label mb-3">Photos <span className="text-text-muted normal-case font-normal">({images.length}/5)</span></p>
+            <div className="grid grid-cols-5 gap-3">
               {previews.map((src, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-[var(--bg-secondary)]">
+                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-bg-elevated border border-bg-border">
                   <Image src={src} alt={`Preview ${i + 1}`} fill className="object-cover" />
                   <button
                     type="button"
                     onClick={() => removeImage(i)}
-                    className="absolute top-1 right-1 p-0.5 rounded-full bg-black/70 text-white hover:bg-red-500/80 transition-colors"
+                    className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/60 text-white hover:bg-red-500/80 transition-colors"
                   >
-                    <X size={12} />
+                    <X size={10} />
                   </button>
                 </div>
               ))}
@@ -117,10 +123,10 @@ export default function CreateListingPage() {
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="aspect-square rounded-xl border-2 border-dashed border-[var(--border-subtle)] hover:border-violet-500/50 hover:bg-violet-500/5 transition-all flex flex-col items-center justify-center gap-1 text-[var(--text-muted)]"
+                  className="aspect-square rounded-xl border-2 border-dashed border-white/10 bg-bg-elevated hover:border-accent/40 hover:bg-accent/5 transition-all flex flex-col items-center justify-center gap-1.5 text-text-muted hover:text-text-secondary"
                 >
-                  <ImagePlus size={22} />
-                  <span className="text-[10px]">Add photo</span>
+                  <ImagePlus size={20} />
+                  <span className="text-[10px] font-semibold">Add Photo</span>
                 </button>
               )}
             </div>
@@ -158,9 +164,9 @@ export default function CreateListingPage() {
           {/* Condition */}
           <div>
             <label className="label">Condition</label>
-            <select {...register('condition')} className="input">
+            <select {...register('condition')} className="input py-2">
               {CONDITIONS.map(({ value, label }) => (
-                <option key={value} value={value} style={{ background: '#130d1f' }}>
+                <option key={value} value={value} style={{ background: '#0a0a0a' }}>
                   {label}
                 </option>
               ))}
@@ -171,10 +177,10 @@ export default function CreateListingPage() {
           {/* Category */}
           <div>
             <label className="label">Category</label>
-            <select {...register('categoryId')} className="input">
-              <option value="" style={{ background: '#130d1f' }}>Select a category</option>
+            <select {...register('categoryId')} className="input py-2">
+              <option value="" style={{ background: '#0a0a0a' }}>Select a category</option>
               {categories.map((cat) => (
-                <option key={cat.id} value={cat.id} style={{ background: '#130d1f' }}>
+                <option key={cat.id} value={cat.id} style={{ background: '#0a0a0a' }}>
                   {cat.name}
                 </option>
               ))}
@@ -182,16 +188,19 @@ export default function CreateListingPage() {
             {errors.categoryId && <p className="text-xs text-red-400 mt-1">{errors.categoryId.message}</p>}
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Link href="/" className="btn-ghost flex-1 text-center">Cancel</Link>
-            <button type="submit" className="btn-primary flex-1" disabled={isPending} id="create-listing-submit">
-              {isPending ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
-              {isPending ? 'Creating…' : 'Create Listing'}
-            </button>
+          <div className="flex gap-4 pt-4">
+            <Link href="/" className="btn-ghost flex-1 text-center py-3 rounded-full">Cancel</Link>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+              <button type="submit" className="btn-primary w-full flex justify-between h-12" disabled={isPending} id="create-listing-submit">
+                <span>{isPending ? 'Creating…' : 'Create Listing'}</span>
+                <span className="btn-primary-circle h-9 w-9">
+                  {isPending ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+                </span>
+              </button>
+            </motion.div>
           </div>
         </form>
-      </div>
+      </motion.div>
     </ProtectedRoute>
   );
 }
-

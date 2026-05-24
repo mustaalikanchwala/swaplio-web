@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { X, Calendar, MapPin, Clock, FileText, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRequestMeeting } from '@/hooks/useMeetings';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const schema = z.object({
   meetingDate: z.string().min(1, 'Date is required'),
@@ -22,6 +23,9 @@ interface RequestMeetingDialogProps {
   listingTitle: string;
   trigger: React.ReactNode;
 }
+
+const MotionContent = motion(Dialog.Content);
+const MotionOverlay = motion(Dialog.Overlay);
 
 export function RequestMeetingDialog({
   listingId,
@@ -41,7 +45,7 @@ export function RequestMeetingDialog({
       await mutateAsync({
         listingId,
         meetingDate: data.meetingDate,
-        meetingTime: data.meetingTime, // formatTime called inside useMeetings
+        meetingTime: data.meetingTime,
         location: data.location,
         notes: data.notes,
       });
@@ -52,7 +56,6 @@ export function RequestMeetingDialog({
     }
   };
 
-  // Get today's date for min date attribute
   const today = new Date().toISOString().split('T')[0];
 
   return (
@@ -60,18 +63,27 @@ export function RequestMeetingDialog({
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
 
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-in fade-in" />
-        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md glass p-6 shadow-2xl shadow-violet-500/10 animate-in fade-in slide-in-from-bottom-4">
+        <MotionOverlay 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/70 backdrop-blur-md z-50" 
+        />
+        <MotionContent 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-surface border border-bg-border p-6 shadow-2xl rounded-2xl font-sans"
+        >
           <div className="flex items-center justify-between mb-5">
             <div>
-              <Dialog.Title className="font-bold text-[var(--text-primary)] text-lg">
+              <Dialog.Title className="font-bold text-white text-lg font-serif">
                 Request a Meeting
               </Dialog.Title>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-1">
+              <p className="text-xs text-text-muted mt-0.5 line-clamp-1">
                 {listingTitle}
               </p>
             </div>
-            <Dialog.Close className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all">
+            <Dialog.Close className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all">
               <X size={18} />
             </Dialog.Close>
           </div>
@@ -129,7 +141,7 @@ export function RequestMeetingDialog({
             {/* Notes */}
             <div>
               <label className="label flex items-center gap-1.5">
-                <FileText size={12} /> Notes <span className="text-[var(--text-muted)] normal-case">(optional)</span>
+                <FileText size={12} /> Notes <span className="text-text-muted normal-case">(optional)</span>
               </label>
               <textarea
                 rows={3}
@@ -139,19 +151,21 @@ export function RequestMeetingDialog({
               />
             </div>
 
-            <div className="flex gap-3 pt-1">
+            <div className="flex gap-3 pt-2">
               <Dialog.Close asChild>
-                <button type="button" className="btn-ghost flex-1">
+                <button type="button" className="btn-ghost flex-1 py-2.5 rounded-full">
                   Cancel
                 </button>
               </Dialog.Close>
-              <button type="submit" className="btn-primary flex-1" disabled={isPending}>
-                {isPending ? <Loader2 size={15} className="animate-spin" /> : null}
-                {isPending ? 'Sending…' : 'Send Request'}
-              </button>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+                <button type="submit" className="btn-primary w-full flex justify-center items-center gap-2 h-11" disabled={isPending}>
+                  {isPending ? <Loader2 size={15} className="animate-spin" /> : null}
+                  <span>{isPending ? 'Sending…' : 'Send Request'}</span>
+                </button>
+              </motion.div>
             </div>
           </form>
-        </Dialog.Content>
+        </MotionContent>
       </Dialog.Portal>
     </Dialog.Root>
   );

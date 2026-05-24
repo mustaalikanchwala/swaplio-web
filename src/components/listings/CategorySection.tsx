@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useInView } from 'framer-motion';
@@ -26,6 +26,7 @@ interface ProductCardProps {
 }
 
 function ProductCard({ listing, accentColor, accentRgb, index }: ProductCardProps) {
+  const [hovered, setHovered] = useState(false);
   const primaryImage =
     listing.images?.find((img) => img.isPrimary)?.signedUrl ??
     listing.images?.[0]?.signedUrl;
@@ -34,7 +35,8 @@ function ProductCard({ listing, accentColor, accentRgb, index }: ProductCardProp
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: Math.min(index * 0.06, 0.4), ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ scale: 1.01 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.4), ease: 'easeOut' }}
       className="product-card-snap"
       role="listitem"
     >
@@ -46,26 +48,16 @@ function ProductCard({ listing, accentColor, accentRgb, index }: ProductCardProp
         <div
           className="h-full flex flex-col overflow-hidden rounded-2xl border"
           style={{
-            background: 'rgba(13, 9, 22, 0.78)',
-            backdropFilter: 'blur(20px)',
-            borderColor: `rgba(${accentRgb}, 0.15)`,
-            transition: 'border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease',
+            background: '#0a0a0a',
+            borderColor: hovered ? `rgba(${accentRgb}, 0.3)` : '#1a1a1a',
+            boxShadow: hovered ? `0 0 20px rgba(${accentRgb}, 0.2)` : 'none',
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.borderColor = `rgba(${accentRgb}, 0.5)`;
-            el.style.boxShadow = `0 0 32px rgba(${accentRgb}, 0.18), 0 16px 48px rgba(0,0,0,0.55)`;
-            el.style.transform = 'translateY(-5px)';
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.borderColor = `rgba(${accentRgb}, 0.15)`;
-            el.style.boxShadow = 'none';
-            el.style.transform = 'translateY(0)';
-          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
         >
           {/* Image */}
-          <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg-secondary)] flex-shrink-0">
+          <div className="relative aspect-[4/3] overflow-hidden bg-bg-elevated flex-shrink-0">
             {primaryImage ? (
               <Image
                 src={primaryImage}
@@ -77,7 +69,7 @@ function ProductCard({ listing, accentColor, accentRgb, index }: ProductCardProp
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                 <Tag size={32} style={{ color: accentColor, opacity: 0.25 }} />
-                <span className="text-[10px] text-[var(--text-muted)] opacity-50">No photo</span>
+                <span className="text-[10px] text-text-muted opacity-50">No photo</span>
               </div>
             )}
 
@@ -89,24 +81,24 @@ function ProductCard({ listing, accentColor, accentRgb, index }: ProductCardProp
             {/* Subtle bottom gradient */}
             <div
               className="absolute inset-x-0 bottom-0 h-10 pointer-events-none"
-              style={{ background: `linear-gradient(to top, rgba(13,9,22,0.65), transparent)` }}
+              style={{ background: `linear-gradient(to top, rgba(0,0,0,0.65), transparent)` }}
             />
           </div>
 
           {/* Content */}
           <div className="p-4 flex flex-col gap-1.5 flex-1">
-            <h3 className="font-semibold text-sm text-[var(--text-primary)] line-clamp-2 leading-snug group-hover:opacity-80 transition-opacity">
+            <h3 className="font-sans font-semibold text-sm text-white line-clamp-2 leading-snug group-hover:text-white/90 transition-colors">
               {listing.title}
             </h3>
 
-            <p className="text-xs text-[var(--text-muted)] truncate">{listing.sellerName}</p>
+            <p className="text-xs text-text-muted truncate">{listing.sellerName}</p>
 
             <div className="mt-auto pt-3 flex items-center justify-between gap-2">
-              <span className="text-base font-bold" style={{ color: accentColor }}>
+              <span className="text-base font-bold font-sans" style={{ color: accentColor }}>
                 {formatPrice(listing.price)}
               </span>
               <span
-                className="text-[10px] font-medium px-2 py-0.5 rounded-full border flex-shrink-0"
+                className="text-[10px] font-medium font-sans px-2 py-0.5 rounded-full border flex-shrink-0"
                 style={{
                   color: accentColor,
                   borderColor: `rgba(${accentRgb}, 0.3)`,
@@ -129,8 +121,8 @@ function SkeletonCard({ accentRgb }: { accentRgb: string }) {
   return (
     <div className="product-card-snap" aria-hidden>
       <div
-        className="rounded-2xl border overflow-hidden"
-        style={{ background: 'rgba(13,9,22,0.78)', borderColor: `rgba(${accentRgb}, 0.12)` }}
+        className="rounded-2xl border overflow-hidden bg-bg-surface"
+        style={{ borderColor: '#1a1a1a' }}
       >
         <div className="skeleton aspect-[4/3]" />
         <div className="p-4 flex flex-col gap-2.5">
@@ -159,11 +151,11 @@ function ErrorState({ accentRgb, accentColor, onRetry }: ErrorStateProps) {
     <div
       className="flex flex-col items-center justify-center gap-3 h-40 rounded-2xl border"
       style={{
-        borderColor: `rgba(${accentRgb}, 0.15)`,
-        background: `rgba(${accentRgb}, 0.04)`,
+        borderColor: '#1a1a1a',
+        background: '#0a0a0a',
       }}
     >
-      <p className="text-sm text-[var(--text-muted)]">Failed to load products</p>
+      <p className="text-sm text-text-muted font-sans">Failed to load products</p>
       <button
         onClick={onRetry}
         className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all hover:scale-105"
@@ -180,10 +172,7 @@ function ErrorState({ accentRgb, accentColor, onRetry }: ErrorStateProps) {
   );
 }
 
-// ─── CategorySection (unified) ────────────────────────────────────────────────
-// This component owns its own data fetching. It renders the entire section
-// (background + content) only when there is data, and returns null when the
-// category has no listings — preventing empty decorated panels.
+// ─── CategorySection ──────────────────────────────────────────────────────────
 
 interface CategorySectionProps {
   category: Category;
@@ -213,8 +202,6 @@ export function CategorySection({ category, index = 0 }: CategorySectionProps) {
     });
   };
 
-  // ── Null guard: do NOT render the section wrapper when there is no content
-  // and we're not in a loading/error state — this prevents empty panels.
   if (!isLoading && !isError && listings.length === 0) {
     return null;
   }
@@ -228,33 +215,15 @@ export function CategorySection({ category, index = 0 }: CategorySectionProps) {
       className="relative overflow-hidden"
       aria-label={`${category.name} listings`}
       style={{
-        background: theme.gradient,
-        borderTop: `1px solid rgba(${theme.accentRgb}, 0.10)`,
-        borderBottom: `1px solid rgba(${theme.accentRgb}, 0.06)`,
+        background: 'transparent',
+        borderTop: '1px solid #1a1a1a',
       }}
     >
-      {/* Dot-grid decorative background */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: `radial-gradient(circle, ${theme.patternColor} 1px, transparent 1px)`,
-          backgroundSize: '28px 28px',
-        }}
-      />
-
-      {/* Left-edge accent line */}
-      <div
-        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-2/3 rounded-full pointer-events-none"
-        style={{
-          background: `linear-gradient(to bottom, transparent, ${theme.accentColor}60, transparent)`,
-        }}
-      />
-
-      {/* Top-right ambient orb */}
+      {/* Subtle top-right ambient orb matching category theme */}
       <div
         className="absolute -top-24 -right-24 w-80 h-80 rounded-full pointer-events-none"
         style={{
-          background: `radial-gradient(circle, rgba(${theme.accentRgb}, 0.10) 0%, transparent 70%)`,
+          background: `radial-gradient(circle, rgba(${theme.accentRgb}, 0.08) 0%, transparent 70%)`,
           filter: 'blur(50px)',
         }}
       />
@@ -269,9 +238,8 @@ export function CategorySection({ category, index = 0 }: CategorySectionProps) {
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
               style={{
-                background: `rgba(${theme.accentRgb}, 0.15)`,
-                border: `1px solid rgba(${theme.accentRgb}, 0.25)`,
-                boxShadow: `0 4px 16px rgba(${theme.accentRgb}, 0.15)`,
+                background: `rgba(${theme.accentRgb}, 0.1)`,
+                border: '1px solid #1a1a1a',
               }}
             >
               {theme.icon}
@@ -280,12 +248,11 @@ export function CategorySection({ category, index = 0 }: CategorySectionProps) {
             {/* Title + count */}
             <div className="min-w-0">
               <h2
-                className="text-xl sm:text-2xl font-bold tracking-tight truncate"
-                style={{ color: '#f0eafa' }}
+                className="text-xl sm:text-2xl font-bold tracking-tight font-serif text-white truncate"
               >
                 {category.name}
               </h2>
-              <p className="text-xs mt-0.5" style={{ color: `rgba(${theme.accentRgb}, 0.7)` }}>
+              <p className="text-xs mt-0.5 font-sans" style={{ color: `rgba(${theme.accentRgb}, 0.7)` }}>
                 {isLoading
                   ? 'Loading…'
                   : isError
@@ -296,58 +263,45 @@ export function CategorySection({ category, index = 0 }: CategorySectionProps) {
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Scroll controls — only when loaded with data */}
+            {/* Scroll controls */}
             {!isLoading && !isError && listings.length > 0 && (
               <div className="hidden sm:flex items-center gap-1.5">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => scroll('left')}
-                  className="w-8 h-8 rounded-full flex items-center justify-center border transition-all hover:-translate-y-0.5"
-                  style={{
-                    borderColor: `rgba(${theme.accentRgb}, 0.25)`,
-                    background: `rgba(${theme.accentRgb}, 0.08)`,
-                    color: theme.accentColor,
-                  }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center border border-bg-border bg-bg-surface hover:bg-bg-elevated transition-colors text-white"
                   aria-label={`Scroll ${category.name} left`}
                 >
                   <ChevronLeft size={15} />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => scroll('right')}
-                  className="w-8 h-8 rounded-full flex items-center justify-center border transition-all hover:-translate-y-0.5"
-                  style={{
-                    borderColor: `rgba(${theme.accentRgb}, 0.25)`,
-                    background: `rgba(${theme.accentRgb}, 0.08)`,
-                    color: theme.accentColor,
-                  }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center border border-bg-border bg-bg-surface hover:bg-bg-elevated transition-colors text-white"
                   aria-label={`Scroll ${category.name} right`}
                 >
                   <ChevronRight size={15} />
-                </button>
+                </motion.button>
               </div>
             )}
 
-            {/* View All — only when data available */}
+            {/* View All */}
             {!isError && (
-              <Link
-                href={`/listings?categoryId=${category.id}`}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border transition-all hover:-translate-y-0.5"
-                style={{
-                  color: theme.accentColor,
-                  borderColor: `rgba(${theme.accentRgb}, 0.28)`,
-                  background: `rgba(${theme.accentRgb}, 0.08)`,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-                    `0 4px 20px rgba(${theme.accentRgb}, 0.25)`;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'none';
-                }}
-                id={`view-all-${category.id}`}
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                View All
-                <ArrowRight size={13} />
-              </Link>
+                <Link
+                  href={`/listings?categoryId=${category.id}`}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl border border-bg-border bg-bg-surface text-white hover:bg-bg-elevated transition-colors"
+                  id={`view-all-${category.id}`}
+                >
+                  <span>View All</span>
+                  <ArrowRight size={13} />
+                </Link>
+              </motion.div>
             )}
           </div>
         </div>
@@ -384,7 +338,7 @@ export function CategorySection({ category, index = 0 }: CategorySectionProps) {
                     />
                   ))}
 
-              {/* Trailing spacer so last card doesn't butt against edge */}
+              {/* Trailing spacer */}
               <div className="flex-shrink-0 w-2" aria-hidden />
             </div>
 
@@ -392,7 +346,7 @@ export function CategorySection({ category, index = 0 }: CategorySectionProps) {
             <div
               className="pointer-events-none absolute right-0 top-0 h-full w-20 hidden sm:block"
               style={{
-                background: `linear-gradient(to left, rgba(13,9,22,0.9), transparent)`,
+                background: `linear-gradient(to left, rgba(0,0,0,0.9), transparent)`,
               }}
             />
           </div>

@@ -2,13 +2,14 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Tag } from 'lucide-react';
 import { useListings } from '@/hooks/useListings';
 import { useCategories } from '@/hooks/useCategories';
 import { ListingCard } from '@/components/listings/ListingCard';
 import { ListingGrid, ListingCardSkeleton } from '@/components/listings/ListingGrid';
 import type { Condition, ListingFilterParams } from '@/types';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 
 const CONDITIONS: { value: Condition; label: string }[] = [
   { value: 'NEW', label: 'Brand New' },
@@ -70,113 +71,136 @@ function BrowsePageInner() {
   );
 
   return (
-    <div className="page-wrapper">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="page-wrapper"
+    >
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold gradient-text mb-1">Browse Listings</h1>
-        <p className="text-[var(--text-muted)] text-sm">
+        <h1 className="text-3xl font-bold font-serif text-white mb-1">Browse Listings</h1>
+        <p className="text-text-secondary text-sm">
           Find second-hand study materials from students near you
         </p>
       </div>
 
       {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-5">
+      <form onSubmit={handleSearch} className="flex gap-3 mb-5">
         <div className="relative flex-1">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
           />
           <input
             type="search"
             placeholder="Search textbooks, notes, equipment..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="input pl-9"
+            className="input pl-11 rounded-full h-12"
             id="listing-search"
           />
         </div>
-        <button type="submit" className="btn-primary px-5">
-          Search
-        </button>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          type="submit"
+          className="btn-primary"
+        >
+          <span>Search</span>
+          <span className="btn-primary-circle">
+            <Search size={18} />
+          </span>
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
           type="button"
           onClick={() => setShowFilters((v) => !v)}
           className={clsx(
-            'btn-ghost px-3',
-            showFilters && 'bg-violet-500/15 border-violet-500/40 text-violet-300'
+            'btn-ghost px-4 rounded-full h-12',
+            showFilters && 'bg-white/5 border-white/30 text-white'
           )}
           aria-label="Toggle filters"
         >
           <SlidersHorizontal size={18} />
-        </button>
+        </motion.button>
       </form>
 
       {/* Category chips */}
-      <div className="flex gap-2 flex-wrap mb-4">
-        <button
+      <div className="flex gap-2 flex-wrap mb-6">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setCategory(undefined)}
           className={clsx(
-            'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+            'px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200',
             !filters.categoryId
-              ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-              : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40 hover:text-[var(--text-primary)]'
+              ? 'border-accent/40 bg-accent/20 text-white'
+              : 'border-bg-border bg-bg-elevated text-text-secondary hover:border-white/20 hover:text-white'
           )}
         >
           All
-        </button>
+        </motion.button>
         {categories.map((cat) => (
-          <button
+          <motion.button
             key={cat.id}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setCategory(cat.id)}
             className={clsx(
-              'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+              'px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200',
               filters.categoryId === cat.id
-                ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40 hover:text-[var(--text-primary)]'
+                ? 'border-accent/40 bg-accent/20 text-white'
+                : 'border-bg-border bg-bg-elevated text-text-secondary hover:border-white/20 hover:text-white'
             )}
           >
             {cat.name}
-          </button>
+          </motion.button>
         ))}
       </div>
 
       {/* Expandable filters */}
       {showFilters && (
-        <div className="glass p-4 mb-5 flex flex-wrap gap-4 fade-in-up">
+        <div className="glass p-5 mb-5 flex flex-wrap gap-6 fade-in-up">
           {/* Condition filter */}
           <div>
             <p className="label mb-2">Condition</p>
             <div className="flex gap-2 flex-wrap">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setCondition(undefined)}
                 className={clsx(
-                  'px-3 py-1 rounded-lg text-xs border transition-all',
+                  'px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200',
                   !filters.condition
-                    ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                    : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40'
+                    ? 'border-accent/40 bg-accent/20 text-white'
+                    : 'border-bg-border bg-bg-elevated text-text-secondary hover:border-white/20'
                 )}
               >
                 Any
-              </button>
+              </motion.button>
               {CONDITIONS.map(({ value, label }) => (
-                <button
+                <motion.button
                   key={value}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setCondition(value)}
                   className={clsx(
-                    'px-3 py-1 rounded-lg text-xs border transition-all',
+                    'px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200',
                     filters.condition === value
-                      ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                      : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-violet-500/40'
+                      ? 'border-accent/40 bg-accent/20 text-white'
+                      : 'border-bg-border bg-bg-elevated text-text-secondary hover:border-white/20'
                   )}
                 >
                   {label}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
 
           {/* Price range */}
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-3">
             <div>
               <p className="label mb-2">Min ₹</p>
               <input
@@ -212,33 +236,55 @@ function BrowsePageInner() {
           </div>
 
           {isFiltered && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={clearFilters}
-              className="btn-ghost text-xs flex items-center gap-1.5 self-end"
+              className="btn-ghost text-xs flex items-center gap-1.5 self-end h-10 px-4 rounded-full"
             >
               <X size={12} /> Clear filters
-            </button>
+            </motion.button>
           )}
         </div>
       )}
 
       {/* Results count */}
       {data && !isFetching && (
-        <p className="text-xs text-[var(--text-muted)] mb-4">
+        <p className="text-xs text-text-muted mb-4 font-sans">
           {data.totalElements} listing{data.totalElements !== 1 ? 's' : ''} found
         </p>
       )}
 
       {/* Listing grid */}
       {allListings.length === 0 && !isFetching ? (
-        <div className="glass p-16 text-center">
-          <p className="text-[var(--text-muted)] text-lg">No listings found</p>
-          <p className="text-[var(--text-muted)] text-sm mt-1">Try adjusting your filters</p>
+        <div className="glass p-16 text-center flex flex-col items-center justify-center gap-4">
+          <Tag size={48} className="text-text-muted opacity-30" />
+          <h2 className="text-2xl font-serif text-white">Nothing here yet</h2>
+          <p className="text-text-secondary text-sm max-w-sm">No listings match your filter criteria. Try adjusting your filters or search terms.</p>
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <button
+              onClick={clearFilters}
+              className="btn-primary"
+            >
+              <span>Reset Filters</span>
+              <span className="btn-primary-circle">
+                <X size={18} />
+              </span>
+            </button>
+          </motion.div>
         </div>
       ) : (
         <ListingGrid>
-          {allListings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} className="fade-in-up" />
+          {allListings.map((listing, index) => (
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              className="fade-in-up"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            />
           ))}
           {isFetching &&
             Array.from({ length: 4 }).map((_, i) => <ListingCardSkeleton key={`sk-${i}`} />)}
@@ -248,15 +294,17 @@ function BrowsePageInner() {
       {/* Load More */}
       {hasMore && !isFetching && (
         <div className="flex justify-center mt-8">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => setPage((p) => p + 1)}
             className="btn-ghost px-8"
           >
             Load more
-          </button>
+          </motion.button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

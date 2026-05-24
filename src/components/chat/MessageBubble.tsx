@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import type { Message } from '@/types';
+import { CheckCheck } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
@@ -16,21 +17,27 @@ export function MessageBubble({ message, isMine }: MessageBubbleProps) {
     <div className={clsx('flex', isMine ? 'justify-end' : 'justify-start')}>
       <div
         className={clsx(
-          'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
+          'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed font-sans',
           isMine
-            ? 'bg-gradient-to-br from-violet-600 to-violet-700 text-white rounded-br-sm shadow-lg shadow-violet-500/20'
-            : 'glass text-[var(--text-primary)] rounded-bl-sm'
+            ? 'bg-accent text-white rounded-br-sm shadow-glow-sm border border-accent/10'
+            : 'bg-bg-elevated border border-bg-border text-white rounded-bl-sm'
         )}
       >
         <p className="break-words">{message.content}</p>
-        <p
-          className={clsx(
-            'text-[10px] mt-1 text-right',
-            isMine ? 'text-violet-200/70' : 'text-[var(--text-muted)]'
+        
+        <div className="flex items-center justify-end gap-1.5 mt-1.5 select-none">
+          <p
+            className={clsx(
+              'text-[9px] font-medium',
+              isMine ? 'text-blue-100/70' : 'text-text-muted'
+            )}
+          >
+            {formatTime(message.sentAt)}
+          </p>
+          {isMine && (
+            <CheckCheck size={11} className="text-white/60 shrink-0" />
           )}
-        >
-          {formatTime(message.sentAt)}
-        </p>
+        </div>
       </div>
     </div>
   );

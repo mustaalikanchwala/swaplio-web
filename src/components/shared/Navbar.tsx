@@ -7,17 +7,18 @@ import {
   MessageCircle,
   Calendar,
   User,
-  PlusCircle,
   LogOut,
   Menu,
   X,
   ShoppingBag,
   Home,
+  ArrowRight,
 } from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
 import { useAuth, useLogout } from '@/hooks/useAuth';
 import { useUnreadCount } from '@/hooks/useChat';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home', icon: Home },
@@ -41,118 +42,137 @@ export function Navbar() {
   const { data: unreadCount = 0 } = useUnreadCount();
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50">
-      <div
-        className="glass border-b border-[var(--border-subtle)] backdrop-blur-xl"
-        style={{ borderRadius: 0 }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-shadow">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-            <span className="font-bold text-lg gradient-text tracking-tight">Swaplio</span>
-          </Link>
+    <header className="fixed top-0 inset-x-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5 h-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="font-serif text-xl font-bold text-white tracking-wide hover:opacity-90 transition-opacity">
+          Swaplio
+        </Link>
 
-          {/* Desktop nav */}
-          {isAuthenticated && (
-            <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
-              {NAV_LINKS.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={clsx(
-                    'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all',
-                    isActive(pathname, href)
-                      ? 'bg-violet-500/15 text-violet-300'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
-                  )}
-                >
-                  <Icon size={15} />
-                  {label}
-                </Link>
-              ))}
-
-              {/* Chat with unread badge */}
+        {/* Desktop nav */}
+        {isAuthenticated && (
+          <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+            {NAV_LINKS.map(({ href, label, icon: Icon }) => (
               <Link
-                href="/chat"
+                key={href}
+                href={href}
                 className={clsx(
-                  'relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all',
-                  pathname.startsWith('/chat')
-                    ? 'bg-violet-500/15 text-violet-300'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
+                  'relative py-1 text-sm font-sans font-medium transition-colors duration-200',
+                  isActive(pathname, href)
+                    ? 'text-white'
+                    : 'text-text-secondary hover:text-white'
                 )}
               >
-                <MessageCircle size={15} />
-                Chat
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-pink-500 text-white text-[10px] font-bold px-1 shadow-lg shadow-pink-500/40">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
+                {label}
+                {isActive(pathname, href) && (
+                  <motion.span
+                    layoutId="activeDot"
+                    className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"
+                  />
                 )}
               </Link>
-            </nav>
+            ))}
+
+            {/* Chat with unread dot indicator */}
+            <Link
+              href="/chat"
+              className={clsx(
+                'relative py-1 text-sm font-sans font-medium transition-colors duration-200',
+                pathname.startsWith('/chat')
+                  ? 'text-white'
+                  : 'text-text-secondary hover:text-white'
+              )}
+            >
+              Chat
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                </span>
+              )}
+              {pathname.startsWith('/chat') && (
+                <motion.span
+                  layoutId="activeDot"
+                  className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"
+                />
+              )}
+            </Link>
+          </nav>
+        )}
+
+        {/* Right actions */}
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <>
+              {/* User greeting */}
+              {user?.fullName && (
+                <span className="hidden lg:block text-xs text-text-muted max-w-[120px] truncate">
+                  Hello, {user.fullName.split(' ')[0]}
+                </span>
+              )}
+
+              {/* Sell button: primary CTA style (white pill, right side 40px circle with blue bg and white ArrowRight) */}
+              <Link href="/listings/create" className="btn-primary hidden sm:inline-flex animate-fade-in" id="nav-sell">
+                <span>Start Selling</span>
+                <span className="btn-primary-circle">
+                  <ArrowRight size={18} />
+                </span>
+              </Link>
+
+              <button
+                onClick={logout}
+                title="Log out"
+                className="p-2 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all animate-fade-in"
+                id="nav-logout"
+              >
+                <LogOut size={18} />
+              </button>
+
+              {/* Mobile hamburger menu */}
+              <button
+                className="md:hidden p-2 rounded-lg text-text-secondary hover:bg-white/5 transition-all"
+                onClick={() => setMobileOpen((v) => !v)}
+                aria-label="Toggle mobile menu"
+              >
+                {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link href="/login" className="btn-ghost text-sm px-4 py-2 animate-fade-in" id="nav-login">
+                Log in
+              </Link>
+              <Link href="/register" className="btn-primary animate-fade-in" id="nav-register">
+                <span>Sign up</span>
+                <span className="btn-primary-circle">
+                  <ArrowRight size={18} />
+                </span>
+              </Link>
+            </div>
           )}
-
-          {/* Right actions */}
-          <div className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <>
-                {/* User greeting */}
-                {user?.fullName && (
-                  <span className="hidden lg:block text-xs text-[var(--text-muted)] max-w-[120px] truncate">
-                    {user.fullName.split(' ')[0]}
-                  </span>
-                )}
-
-                <Link href="/listings/create" className="btn-primary hidden sm:inline-flex" id="nav-sell">
-                  <PlusCircle size={15} />
-                  Sell
-                </Link>
-                <button
-                  onClick={logout}
-                  title="Log out"
-                  className="p-2 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-400/10 transition-all"
-                  id="nav-logout"
-                >
-                  <LogOut size={18} />
-                </button>
-                {/* Mobile toggle */}
-                <button
-                  className="md:hidden p-2 rounded-lg text-[var(--text-secondary)] hover:bg-white/5"
-                  onClick={() => setMobileOpen((v) => !v)}
-                  aria-label="Toggle mobile menu"
-                >
-                  {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link href="/login" className="btn-ghost text-sm px-4 py-2" id="nav-login">
-                  Log in
-                </Link>
-                <Link href="/register" className="btn-primary text-sm px-4 py-2" id="nav-register">
-                  Sign up
-                </Link>
-              </div>
-            )}
-          </div>
         </div>
+      </div>
 
-        {/* Mobile menu */}
+      {/* Mobile Drawer menu */}
+      <AnimatePresence>
         {mobileOpen && isAuthenticated && (
-          <div className="md:hidden border-t border-[var(--border-subtle)] px-4 py-3 flex flex-col gap-1">
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="md:hidden border-t border-white/5 bg-black/95 backdrop-blur-2xl px-4 py-4 flex flex-col gap-2 overflow-hidden shadow-2xl"
+          >
             {NAV_LINKS.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
                 onClick={() => setMobileOpen(false)}
                 className={clsx(
-                  'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                  'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all',
                   isActive(pathname, href)
-                    ? 'bg-violet-500/15 text-violet-300'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
+                    ? 'bg-accent/15 text-white'
+                    : 'text-text-secondary hover:text-white hover:bg-white/5'
                 )}
               >
                 <Icon size={16} />
@@ -162,12 +182,12 @@ export function Navbar() {
             <Link
               href="/chat"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5"
+              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5"
             >
               <MessageCircle size={16} />
               Chat
               {unreadCount > 0 && (
-                <span className="ml-auto min-w-[20px] h-5 flex items-center justify-center rounded-full bg-pink-500 text-white text-[10px] font-bold px-1">
+                <span className="ml-auto min-w-[20px] h-5 flex items-center justify-center rounded-full bg-accent text-white text-[10px] font-bold px-1">
                   {unreadCount}
                 </span>
               )}
@@ -175,14 +195,16 @@ export function Navbar() {
             <Link
               href="/listings/create"
               onClick={() => setMobileOpen(false)}
-              className="btn-primary mt-2 w-full"
+              className="btn-primary mt-2 w-full flex justify-between"
             >
-              <PlusCircle size={15} />
-              Sell something
+              <span>Sell something</span>
+              <span className="btn-primary-circle">
+                <ArrowRight size={18} />
+              </span>
             </Link>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </header>
   );
 }

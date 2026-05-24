@@ -33,10 +33,32 @@ function AppProviders({ children }: { children: React.ReactNode }) {
         position="top-right"
         toastOptions={{
           style: {
-            background: 'rgba(20, 14, 30, 0.95)',
-            color: '#e2d9f3',
-            border: '1px solid rgba(139, 92, 246, 0.3)',
-            backdropFilter: 'blur(12px)',
+            background: '#0a0a0a',
+            color: '#ffffff',
+            border: '1px solid #1a1a1a',
+            borderRadius: '12px',
+            fontFamily: 'Instrument Sans, sans-serif',
+            fontSize: '14px',
+          },
+          success: {
+            style: {
+              borderLeft: '4px solid #22c55e',
+              background: '#0a0a0a',
+              color: '#ffffff',
+              borderTop: '1px solid #1a1a1a',
+              borderRight: '1px solid #1a1a1a',
+              borderBottom: '1px solid #1a1a1a',
+            },
+          },
+          error: {
+            style: {
+              borderLeft: '4px solid #ef4444',
+              background: '#0a0a0a',
+              color: '#ffffff',
+              borderTop: '1px solid #1a1a1a',
+              borderRight: '1px solid #1a1a1a',
+              borderBottom: '1px solid #1a1a1a',
+            },
           },
         }}
       />
