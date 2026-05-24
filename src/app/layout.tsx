@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/shared/Providers';
-import { Navbar } from '@/components/shared/Navbar';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
@@ -31,15 +30,10 @@ export default function RootLayout({
           <div className="orb orb-1" />
           <div className="orb orb-2" />
 
-          {/* Fixed nav */}
-          <Navbar />
-
-          {/* Main content — offset by navbar height */}
-          <main className="relative z-10 pt-16 min-h-screen">
-            {children}
-          </main>
+          {children}
         </Providers>
       </body>
     </html>
   );
 }
+
