@@ -81,7 +81,8 @@ export default function MeetingDetailPage() {
 
   const handleSellerAction = async (action: 'CONFIRM' | 'REJECT') => {
     try {
-      await sellerRespond({ action });
+      const backendAction = action === 'CONFIRM' ? 'CONFIRMED' : 'REJECTED';
+      await sellerRespond({ action: backendAction });
       toast.success(action === 'CONFIRM' ? 'Meeting confirmed!' : 'Meeting rejected.');
     } catch {
       toast.error('Action failed.');
@@ -90,7 +91,8 @@ export default function MeetingDetailPage() {
 
   const handleBuyerAction = async (action: 'ACCEPT' | 'DECLINE') => {
     try {
-      await buyerRespond({ action });
+      const backendAction = action === 'ACCEPT' ? 'CONFIRMED' : 'REJECTED';
+      await buyerRespond({ action: backendAction });
       toast.success(action === 'ACCEPT' ? 'Reschedule accepted!' : 'Reschedule declined.');
     } catch {
       toast.error('Action failed.');
@@ -108,7 +110,7 @@ export default function MeetingDetailPage() {
     }
   };
 
-  const [h, m] = meeting.meetingTime.split(':');
+  const [h, m] = (meeting.meetingTime || '').split(':');
   const dateDisplay = new Date(meeting.meetingDate).toLocaleDateString('en-IN', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
@@ -165,8 +167,8 @@ export default function MeetingDetailPage() {
               {meeting.proposedLocation && (
                 <InfoRow icon={MapPin} label="New Location" value={meeting.proposedLocation} />
               )}
-              {meeting.proposedNotes && (
-                <InfoRow icon={FileText} label="Notes" value={meeting.proposedNotes} />
+              {meeting.sellerNote && (
+                <InfoRow icon={FileText} label="Notes" value={meeting.sellerNote} />
               )}
             </div>
           </div>

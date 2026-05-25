@@ -63,109 +63,102 @@ export function RequestMeetingDialog({
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
 
       <Dialog.Portal>
-        <MotionOverlay 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-md z-50" 
-        />
-        <MotionContent 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-bg-surface border border-bg-border p-6 shadow-2xl rounded-2xl font-sans"
-        >
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <Dialog.Title className="font-bold text-white text-lg font-serif">
-                Request a Meeting
-              </Dialog.Title>
-              <p className="text-xs text-text-muted mt-0.5 line-clamp-1">
-                {listingTitle}
-              </p>
-            </div>
-            <Dialog.Close className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all">
-              <X size={18} />
-            </Dialog.Close>
-          </div>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Date */}
-            <div>
-              <label className="label flex items-center gap-1.5">
-                <Calendar size={12} /> Preferred Date
-              </label>
-              <input
-                type="date"
-                min={today}
-                {...register('meetingDate')}
-                className="input"
-                style={{ colorScheme: 'dark' }}
-              />
-              {errors.meetingDate && (
-                <p className="text-xs text-red-400 mt-1">{errors.meetingDate.message}</p>
-              )}
-            </div>
-
-            {/* Time */}
-            <div>
-              <label className="label flex items-center gap-1.5">
-                <Clock size={12} /> Preferred Time
-              </label>
-              <input
-                type="time"
-                {...register('meetingTime')}
-                className="input"
-                style={{ colorScheme: 'dark' }}
-              />
-              {errors.meetingTime && (
-                <p className="text-xs text-red-400 mt-1">{errors.meetingTime.message}</p>
-              )}
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="label flex items-center gap-1.5">
-                <MapPin size={12} /> Location
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Library 2nd floor, Cafeteria..."
-                {...register('location')}
-                className="input"
-              />
-              {errors.location && (
-                <p className="text-xs text-red-400 mt-1">{errors.location.message}</p>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="label flex items-center gap-1.5">
-                <FileText size={12} /> Notes <span className="text-text-muted normal-case">(optional)</span>
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Any additional info..."
-                {...register('notes')}
-                className="input resize-none"
-              />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Dialog.Close asChild>
-                <button type="button" className="btn-ghost flex-1 py-2.5 rounded-full">
-                  Cancel
-                </button>
+        <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 animate-fade-in" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <Dialog.Content className="w-full max-w-md bg-bg-surface border border-bg-border p-6 shadow-2xl rounded-2xl font-sans animate-scale-up">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <Dialog.Title className="font-bold text-white text-lg font-serif">
+                  Request a Meeting
+                </Dialog.Title>
+                <p className="text-xs text-text-muted mt-0.5 line-clamp-1">
+                  {listingTitle}
+                </p>
+              </div>
+              <Dialog.Close className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all">
+                <X size={18} />
               </Dialog.Close>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
-                <button type="submit" className="btn-primary w-full flex justify-center items-center gap-2 h-11" disabled={isPending}>
-                  {isPending ? <Loader2 size={15} className="animate-spin" /> : null}
-                  <span>{isPending ? 'Sending…' : 'Send Request'}</span>
-                </button>
-              </motion.div>
             </div>
-          </form>
-        </MotionContent>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Date */}
+              <div>
+                <label className="label flex items-center gap-1.5">
+                  <Calendar size={12} /> Preferred Date
+                </label>
+                <input
+                  type="date"
+                  min={today}
+                  {...register('meetingDate')}
+                  className="input"
+                  style={{ colorScheme: 'dark' }}
+                />
+                {errors.meetingDate && (
+                  <p className="text-xs text-red-400 mt-1">{errors.meetingDate.message}</p>
+                )}
+              </div>
+
+              {/* Time */}
+              <div>
+                <label className="label flex items-center gap-1.5">
+                  <Clock size={12} /> Preferred Time
+                </label>
+                <input
+                  type="time"
+                  {...register('meetingTime')}
+                  className="input"
+                  style={{ colorScheme: 'dark' }}
+                />
+                {errors.meetingTime && (
+                  <p className="text-xs text-red-400 mt-1">{errors.meetingTime.message}</p>
+                )}
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="label flex items-center gap-1.5">
+                  <MapPin size={12} /> Location
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Library 2nd floor, Cafeteria..."
+                  {...register('location')}
+                  className="input"
+                />
+                {errors.location && (
+                  <p className="text-xs text-red-400 mt-1">{errors.location.message}</p>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="label flex items-center gap-1.5">
+                  <FileText size={12} /> Notes <span className="text-text-muted normal-case">(optional)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Any additional info..."
+                  {...register('notes')}
+                  className="input resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Dialog.Close asChild>
+                  <button type="button" className="btn-ghost flex-1 py-2.5 rounded-full">
+                    Cancel
+                  </button>
+                </Dialog.Close>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+                  <button type="submit" className="btn-primary w-full flex justify-center items-center gap-2 h-11" disabled={isPending}>
+                    {isPending ? <Loader2 size={15} className="animate-spin" /> : null}
+                    <span>{isPending ? 'Sending…' : 'Send Request'}</span>
+                  </button>
+                </motion.div>
+              </div>
+            </form>
+          </Dialog.Content>
+        </div>
       </Dialog.Portal>
     </Dialog.Root>
   );

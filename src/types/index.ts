@@ -103,7 +103,7 @@ export interface Meeting {
   proposedDate?: string;
   proposedTime?: string;
   proposedLocation?: string;
-  proposedNotes?: string;
+  sellerNote?: string;
   createdAt: string;
 }
 
@@ -116,15 +116,15 @@ export interface RequestMeetingPayload {
 }
 
 export interface SellerRespondPayload {
-  action: 'CONFIRM' | 'REJECT' | 'RESCHEDULE';
+  action: 'CONFIRMED' | 'REJECTED' | 'RESCHEDULED';
   proposedDate?: string;
   proposedTime?: string;
   proposedLocation?: string;
-  proposedNotes?: string;
+  sellerNote?: string;
 }
 
 export interface BuyerRespondPayload {
-  action: 'ACCEPT' | 'DECLINE';
+  action: 'CONFIRMED' | 'REJECTED';
 }
 
 // ── CHAT ─────────────────────────────────────────────────────────────────────
