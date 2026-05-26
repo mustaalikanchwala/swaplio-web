@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { AiLoadingProvider } from '@/context/AiLoadingContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,7 +70,9 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppProviders>{children}</AppProviders>
+      <AiLoadingProvider>
+        <AppProviders>{children}</AppProviders>
+      </AiLoadingProvider>
     </QueryClientProvider>
   );
 }

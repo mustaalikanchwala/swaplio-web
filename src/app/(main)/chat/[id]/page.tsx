@@ -1,8 +1,8 @@
 'use client';
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Send, Loader2, Tag } from 'lucide-react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { ArrowLeft, Send, Loader2, Tag, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useMessages, useConversations } from '@/hooks/useChat';
@@ -14,7 +14,8 @@ import { getToken } from '@/lib/auth';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@/types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAi } from '@/hooks/useAi';
 
 export default function ChatRoomPage() {
   const { id: conversationId } = useParams<{ id: string }>();
@@ -29,7 +30,11 @@ export default function ChatRoomPage() {
     conversationId !== 'new' ? conversationId : null
   );
 
+  const [replySuggestions, setReplySuggestions] = useState<string[]>([]);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { getReplySuggestions, repliesLoading } = useAi();
 
   // Load conversation details and listing info
   const { data: conversations = [] } = useConversations();
@@ -56,10 +61,29 @@ export default function ChatRoomPage() {
     queryClient.invalidateQueries({ queryKey: ['conversations'] });
   }, [localConversationId, queryClient]);
 
+  // ── Fetch reply suggestions when a new OTHER-party message arrives ──────────
+  const handleNewMessage = useCallback(
+    async (msg: Message) => {
+      if (!currentUser || msg.senderId === currentUser.id) return;
+
+      // Get last 4 messages from cache for context
+      const cached = queryClient.getQueryData<Message[]>(['messages', localConversationId]) ?? [];
+      const contextMsgs = cached.slice(-4).map((m) => `${m.senderName}: ${m.content}`);
+
+      const role =
+        currentUser.id === currentConversation?.buyerId ? 'buyer' : 'seller';
+
+      const suggestions = await getReplySuggestions(contextMsgs, role);
+      setReplySuggestions(suggestions);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentUser, localConversationId, currentConversation, queryClient]
+  );
+
   // Subscribe to WebSocket
   useWebSocket({
     conversationId: localConversationId ?? undefined,
-    onMessage: () => {},
+    onMessage: handleNewMessage,
     onReply: (msg: Message) => {
       if (!localConversationId && msg.conversationId) {
         setLocalConversationId(msg.conversationId);
@@ -84,6 +108,7 @@ export default function ChatRoomPage() {
 
     setSending(true);
     setInput('');
+    setReplySuggestions([]); // Clear suggestions on send
 
     const payload = localConversationId
       ? { conversationId: localConversationId, content: text }
@@ -99,6 +124,22 @@ export default function ChatRoomPage() {
       handleSend();
     }
   };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    // Clear suggestions when user starts typing
+    if (e.target.value && replySuggestions.length > 0) {
+      setReplySuggestions([]);
+    }
+  };
+
+  const handleChipClick = (suggestion: string) => {
+    setInput(suggestion);
+    setReplySuggestions([]);
+    inputRef.current?.focus();
+  };
+
+  const showSuggestionsArea = repliesLoading || replySuggestions.length > 0;
 
   return (
     <div className="flex flex-col h-full bg-black/20 font-sans">
@@ -189,27 +230,65 @@ export default function ChatRoomPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Reply suggestions */}
-      {!isLoading && (
-        <div className="flex gap-2 px-4 py-2 bg-black/30 border-t border-bg-border/30 overflow-x-auto scrollbar-none shrink-0">
-          {["Is this still available?", "Where can we meet?", "Would you take a lower price?"].map((chip) => (
-            <button
-              key={chip}
-              onClick={() => setInput(chip)}
-              className="px-3.5 py-1.5 rounded-full text-[11px] font-semibold border border-bg-border bg-bg-elevated text-text-secondary hover:border-accent/40 hover:text-white transition-all whitespace-nowrap"
-            >
-              {chip}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* AI Reply Suggestions */}
+      <AnimatePresence>
+        {showSuggestionsArea && (
+          <motion.div
+            key="suggestions"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            className="shrink-0"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <p className="text-[10px] text-white/30 px-4 pt-2">✨ Quick replies</p>
+            <div className="flex flex-wrap gap-2 px-4 py-2">
+              {repliesLoading ? (
+                // Skeleton chips
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-7 w-32 rounded-full bg-bg-elevated animate-pulse border border-bg-border"
+                  />
+                ))
+              ) : (
+                replySuggestions.map((suggestion, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleChipClick(suggestion)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-white/70 hover:text-white border transition-all cursor-pointer ${i === 2 ? 'hidden sm:inline-flex' : ''}`}
+                    style={{
+                      background: '#111111',
+                      borderColor: 'rgba(255,255,255,0.08)',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(48,84,255,0.40)';
+                      (e.currentTarget as HTMLElement).style.background = 'rgba(48,84,255,0.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)';
+                      (e.currentTarget as HTMLElement).style.background = '#111111';
+                    }}
+                  >
+                    <Sparkles size={10} className="text-accent/60 shrink-0" />
+                    <span>{suggestion}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Input Area */}
       <div className="border-t border-bg-border px-4 py-3 bg-bg-surface flex gap-3 items-end shrink-0">
         <textarea
+          ref={inputRef}
           rows={1}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message… (Enter to send)"
           className="input flex-1 resize-none max-h-32 overflow-y-auto rounded-xl py-2.5"
