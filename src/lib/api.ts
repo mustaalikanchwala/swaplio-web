@@ -45,11 +45,6 @@ export interface PriceSuggestion {
   reason: string;
 }
 
-export interface QualityCheck {
-  score: number;
-  tips: string[];
-}
-
 // ── AI API helper: creates a 15-second AbortController ────────────────────────
 function aiSignal(): { signal: AbortSignal; cleanup: () => void } {
   const controller = new AbortController();
@@ -98,19 +93,6 @@ export const suggestReplies = async (
   try {
     const res = await api.post('/api/ai/suggest-replies', { recentMessages, role }, { signal });
     return res.data.suggestions;
-  } finally {
-    cleanup();
-  }
-};
-
-export const checkListingQuality = async (
-  title: string,
-  description: string
-): Promise<QualityCheck> => {
-  const { signal, cleanup } = aiSignal();
-  try {
-    const res = await api.post('/api/ai/check-quality', { title, description }, { signal });
-    return res.data;
   } finally {
     cleanup();
   }

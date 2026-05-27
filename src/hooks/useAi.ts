@@ -5,9 +5,7 @@ import {
   suggestPrice,
   generateDescription,
   suggestReplies,
-  checkListingQuality,
   PriceSuggestion,
-  QualityCheck,
 } from '@/lib/api';
 import { useAiLoadingContext } from '@/context/AiLoadingContext';
 
@@ -20,17 +18,15 @@ export function useAi() {
 
   const [priceLoading, setPriceLoading] = useState(false);
   const [descLoading, setDescLoading] = useState(false);
-  const [qualityLoading, setQualityLoading] = useState(false);
   const [repliesLoading, setRepliesLoading] = useState(false);
 
   const [priceSuggestion, setPriceSuggestion] = useState<PriceSuggestion | null>(null);
-  const [qualityCheck, setQualityCheck] = useState<QualityCheck | null>(null);
 
   // Sync aggregate loading state to the global context
   useEffect(() => {
-    const anyLoading = priceLoading || descLoading || qualityLoading || repliesLoading;
+    const anyLoading = priceLoading || descLoading || repliesLoading;
     registerLoading(instanceId, anyLoading);
-  }, [priceLoading, descLoading, qualityLoading, repliesLoading, instanceId, registerLoading]);
+  }, [priceLoading, descLoading, repliesLoading, instanceId, registerLoading]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -74,20 +70,6 @@ export function useAi() {
     }
   };
 
-  const getQualityCheck = async (title: string, description: string) => {
-    if (!title) return;
-    setQualityLoading(true);
-    setQualityCheck(null);
-    try {
-      const result = await checkListingQuality(title, description);
-      setQualityCheck(result);
-    } catch (err) {
-      console.error('Quality check failed:', err);
-      // silent fail — just hide quality card
-    } finally {
-      setQualityLoading(false);
-    }
-  };
 
   const getReplySuggestions = async (
     recentMessages: string[],
@@ -108,13 +90,10 @@ export function useAi() {
   return {
     getSuggestedPrice,
     getGeneratedDescription,
-    getQualityCheck,
     getReplySuggestions,
     priceLoading,
     descLoading,
-    qualityLoading,
     repliesLoading,
     priceSuggestion,
-    qualityCheck,
   };
 }

@@ -40,12 +40,6 @@ const CONDITIONS: { value: Condition; label: string }[] = [
   { value: 'FAIR', label: 'Fair' },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-function getQualityColor(score: number) {
-  if (score >= 7) return { text: 'text-green-400', bg: 'bg-green-400', badge: 'bg-green-500/20 text-green-400', card: 'bg-green-500/10 border-green-500/20' };
-  if (score >= 4) return { text: 'text-yellow-400', bg: 'bg-yellow-400', badge: 'bg-yellow-500/20 text-yellow-400', card: 'bg-yellow-500/10 border-yellow-500/20' };
-  return { text: 'text-red-400', bg: 'bg-red-400', badge: 'bg-red-500/20 text-red-400', card: 'bg-red-500/10 border-red-500/20' };
-}
 
 // ── Confirm Dialog ─────────────────────────────────────────────────────────────
 function ConfirmReplaceDialog({
@@ -99,12 +93,9 @@ export default function CreateListingPage() {
   const {
     getSuggestedPrice,
     getGeneratedDescription,
-    getQualityCheck,
     priceLoading,
     descLoading,
-    qualityLoading,
     priceSuggestion,
-    qualityCheck,
   } = useAi();
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -127,16 +118,6 @@ export default function CreateListingPage() {
   const watchedCondition = watch('condition') ?? '';
   const watchedCategoryId = watch('categoryId') ?? '';
 
-  // ── Quality check debounce ──────────────────────────────────────────────────
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (watchedTitle.length > 3 && watchedDescription.length > 10) {
-        getQualityCheck(watchedTitle, watchedDescription);
-      }
-    }, 1500);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchedTitle, watchedDescription]);
 
   // Reset dismissed price card when a new suggestion arrives
   useEffect(() => {
@@ -228,7 +209,6 @@ export default function CreateListingPage() {
     }
   };
 
-  const qualityColors = qualityCheck ? getQualityColor(qualityCheck.score) : null;
 
   return (
     <ProtectedRoute>
@@ -324,57 +304,6 @@ export default function CreateListingPage() {
             <textarea rows={4} placeholder="Describe the condition, edition, any highlights..." {...register('description')} className="input resize-none" />
             {errors.description && <p className="text-xs text-red-400 mt-1">{errors.description.message}</p>}
 
-            {/* Quality check loading */}
-            {qualityLoading && (
-              <div className="flex items-center gap-1.5 mt-2 text-text-muted text-xs">
-                <Loader2 size={11} className="animate-spin" />
-                <span>AI is checking quality…</span>
-              </div>
-            )}
-
-            {/* Quality check result */}
-            <AnimatePresence>
-              {qualityCheck && !qualityLoading && qualityColors && (
-                <motion.div
-                  key="quality-card"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.25 }}
-                  className={`mt-3 border rounded-xl p-3 ${qualityColors.card}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Sparkles size={14} className={qualityColors.text} />
-                      <span className={`text-xs font-medium ${qualityColors.text}`}>Listing Quality</span>
-                    </div>
-                    <span className={`text-xs rounded-full px-2 py-0.5 font-semibold ${qualityColors.badge}`}>
-                      {qualityCheck.score}/10
-                    </span>
-                  </div>
-                  {/* Score bar */}
-                  <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(qualityCheck.score / 10) * 100}%` }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                      className={`h-full rounded-full ${qualityColors.bg}`}
-                    />
-                  </div>
-                  {/* Tips */}
-                  {qualityCheck.tips.length > 0 && (
-                    <ul className="mt-2 space-y-1">
-                      {qualityCheck.tips.map((tip, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${qualityColors.bg}`} />
-                          <span className="text-xs text-white/70">{tip}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           {/* Price */}
