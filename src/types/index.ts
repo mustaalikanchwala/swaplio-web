@@ -35,6 +35,11 @@ export interface LoginRequest {
 export type Condition = 'NEW' | 'LIKE_NEW' | 'GOOD' | 'FAIR';
 export type ListingStatus = 'ACTIVE' | 'SOLD';
 
+export interface AiQualityResult {
+  score: number       // 1-10 quality score
+  tips: string[]      // actionable improvement suggestions
+}
+
 export interface ListingImage {
   id: string;
   signedUrl: string;
@@ -55,6 +60,7 @@ export interface Listing {
   sellerId: string;
   images: ListingImage[];
   createdAt: string;
+  aiQualityCheck: AiQualityResult | null;  // null until async AI check completes
 }
 
 export interface CreateListingRequest {

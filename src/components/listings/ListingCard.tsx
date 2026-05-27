@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Tag } from 'lucide-react';
+import { MapPin, Tag, Sparkles } from 'lucide-react';
 import { ConditionBadge } from '@/components/ui/ConditionBadge';
+import { AiQualityCard } from '@/components/listings/AiQualityCard';
 import type { Listing } from '@/types';
 import clsx from 'clsx';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ListingCardProps {
   listing: Listing;
@@ -23,6 +25,7 @@ const MotionLink = motion(Link);
 export function ListingCard({ listing, className, style }: ListingCardProps) {
   const primaryImage = listing.images?.[0]?.signedUrl;
   const isSold = listing.status === 'SOLD';
+  const [showQuality, setShowQuality] = useState(false);
 
   return (
     <MotionLink
@@ -30,10 +33,38 @@ export function ListingCard({ listing, className, style }: ListingCardProps) {
       whileHover={{ scale: 1.01 }}
       className={clsx('block group', className)}
       style={style}
+      // Tooltip only shows on devices that support hover
+      onMouseEnter={() => {
+        if (listing.aiQualityCheck) setShowQuality(true);
+      }}
+      onMouseLeave={() => setShowQuality(false)}
     >
-      <div className="glass overflow-hidden h-full flex flex-col transition-all duration-200 border border-bg-border bg-bg-surface hover:border-accent/30 hover:shadow-glow-sm">
-        {/* Image */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-bg-elevated">
+      {/* Outer div: overflow-visible so the tooltip can appear above the card */}
+      <div className="glass overflow-visible h-full flex flex-col transition-all duration-200 border border-bg-border bg-bg-surface hover:border-accent/30 hover:shadow-glow-sm relative">
+
+        {/* Hover tooltip — compact quality card, appears above the card */}
+        <AnimatePresence>
+          {showQuality && listing.aiQualityCheck && (
+            <motion.div
+              initial={{ opacity: 0, y: 4, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 4, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute bottom-full left-0 mb-2 z-50"
+              onMouseEnter={() => setShowQuality(true)}
+              onMouseLeave={() => setShowQuality(false)}
+            >
+              <AiQualityCard
+                score={listing.aiQualityCheck.score}
+                tips={listing.aiQualityCheck.tips}
+                compact={true}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Image — overflow-hidden applied here only, not on outer div */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-bg-elevated rounded-t-[inherit]">
           {primaryImage ? (
             <Image
               src={primaryImage}
@@ -60,10 +91,29 @@ export function ListingCard({ listing, className, style }: ListingCardProps) {
             </div>
           )}
 
-          {/* Condition badge */}
+          {/* Condition badge — top-left */}
           <div className="absolute top-2 left-2">
             <ConditionBadge condition={listing.condition} />
           </div>
+
+          {/* AI score badge — top-right, always visible when aiQualityCheck exists */}
+          {listing.aiQualityCheck && (
+            <div
+              className={clsx(
+                'absolute top-2 right-2 z-10',
+                'flex items-center gap-1 rounded-full px-2 py-0.5',
+                'backdrop-blur-sm text-[10px] font-bold',
+                listing.aiQualityCheck.score >= 7
+                  ? 'bg-green-500/80 text-white'
+                  : listing.aiQualityCheck.score >= 4
+                  ? 'bg-yellow-500/80 text-black'
+                  : 'bg-red-500/80 text-white'
+              )}
+            >
+              <Sparkles className="w-2.5 h-2.5" />
+              {listing.aiQualityCheck.score}/10
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -90,3 +140,4 @@ export function ListingCard({ listing, className, style }: ListingCardProps) {
     </MotionLink>
   );
 }
+

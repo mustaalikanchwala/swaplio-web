@@ -22,6 +22,7 @@ import { ConditionBadge } from '@/components/ui/ConditionBadge';
 import { RequestMeetingDialog } from '@/components/meetings/RequestMeetingDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
+import { AiQualityCard } from '@/components/listings/AiQualityCard';
 
 function formatPrice(price: number) {
   return Number.isInteger(price) ? `₹${price}` : `₹${price.toFixed(2)}`;
@@ -167,6 +168,15 @@ export default function ListingDetailPage() {
               {listing.description}
             </p>
           </div>
+
+          {/* AI Quality Card — appears once async check completes (refresh after ~5s) */}
+          {listing.aiQualityCheck && (
+            <AiQualityCard
+              score={listing.aiQualityCheck.score}
+              tips={listing.aiQualityCheck.tips}
+              compact={false}
+            />
+          )}
 
           {/* Seller info */}
           <div className="flex items-center gap-3 glass p-4">
